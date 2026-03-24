@@ -1,0 +1,68 @@
+[
+  {
+    "id": "1770806262503",
+    "title": "Homepage",
+    "slug": "home",
+    "rows": [],
+    "history": [],
+    "lastEdited": 1770823946296,
+    "includeInMenu": true,
+    "navigationDropdown": "none",
+    "themeVersion": "light",
+    "enforcedTheme": "",
+    "metaDescription": "",
+    "buttonLinkColor": "#7683a7",
+    "sitemapPriority": 0.5,
+    "translations": {
+      "en": {
+        "title": "Domov",
+        "slug": "home",
+        "rows": [
+          {
+            "component": "TitleSlide",
+            "fields": {
+              "heading": "abcd",
+              "alignment": "center",
+              "headingSize": "normal",
+              "text": "abcd",
+              "buttons": [
+                {
+                  "icon": "",
+                  "title": "",
+                  "link": "",
+                  "openAsPopup": false,
+                  "showAsButton": true
+                }
+              ],
+              "darkTheme": false,
+              "backgroundColor": "#ffffff",
+              "minimalHeight": 70,
+              "backgroundImage": "",
+              "mobileBackgroundImage": "",
+              "scaleImageToWholeBackground": false,
+              "backgroundTexture": "",
+              "videoTransparency": 100,
+              "videoLink": ""
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "1770807287691",
+    "title": "New Page",
+    "slug": "new-page-1770807287691",
+    "rows": [],
+    "history": [],
+    "lastEdited": 1770807287691,
+    "includeInMenu": false,
+    "navigationDropdown": "none",
+    "themeVersion": "auto",
+    "enforcedTheme": "",
+    "metaDescription": "",
+    "buttonLinkColor": "",
+    "sitemapPriority": 0.5,
+    "translations": {}
+  }
+]

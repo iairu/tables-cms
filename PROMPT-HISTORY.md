@@ -1,0 +1,1 @@
+take the TAURI-SVELTE-REWRITE todolist app as a starter boilerplate on how to recode the entirety of TABLES-OLD.app/Contents/Resources gatsby+react+electron "offline cms" project into a tauri+svelte project for better performance and smaller footprint, edit the files directly

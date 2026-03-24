@@ -1,0 +1,1190 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { debounce } from '../components/cms/utils';
+import { io } from 'socket.io-client';
+
+const useCMSData = () => {
+  // Persistent debounced save refs for page/blog editing
+  const debouncedSavePagesRef = useRef(null);
+  const debouncedSaveBlogRef = useRef(null);
+  // Collaboration state
+  const socketRef = useRef(null);
+  const [collabState, setCollabState] = useState({
+    isServer: false,
+    isConnected: false,
+    wasConnectedAsClient: false, // true once connected as client, cleared on manual disconnect
+    status: 'disconnected', // disconnected, connecting, connected, error
+    error: null,
+    serverIP: '',
+    clientName: 'Anonymous',
+    activeLocks: [], // Array of { fieldId, clientName }
+    connectedClients: [],
+    socketId: null,
+    socketId: null,
+    discoveredServers: [], // Array of { ip, port, name, id }
+    availableInterfaces: [], // Array of { name, ip, family }
+    recentConnections: [] // Array of { ip, port, name, lastConnected, isFavorite }
+  });
+
+  // Load recent connections from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('recentConnections');
+      if (saved) {
+        setCollabState(prev => ({ ...prev, recentConnections: JSON.parse(saved) }));
+      }
+    } catch (e) {
+      console.error('Failed to load recent connections:', e);
+    }
+  }, []);
+
+  const saveConnectionProfile = useCallback((ip, port, name) => {
+    setCollabState(prev => {
+      const current = prev.recentConnections || [];
+      const existingIndex = current.findIndex(c => c.ip === ip && c.port === port);
+
+      let updated;
+      const now = new Date().toISOString();
+      const profile = { ip, port, name, lastConnected: now, isFavorite: false };
+
+      if (existingIndex >= 0) {
+        // Update existing
+        const existing = current[existingIndex];
+        updated = [...current];
+        updated[existingIndex] = { ...existing, name, lastConnected: now };
+      } else {
+        // Add new
+        updated = [profile, ...current];
+      }
+
+      // Sort: Favorites first, then by lastConnected
+      updated.sort((a, b) => {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        return new Date(b.lastConnected) - new Date(a.lastConnected);
+      });
+
+      // Limit to 10 non-favorites? No, let's keep all for now, maybe top 20
+      if (updated.length > 20) updated = updated.slice(0, 20);
+
+      localStorage.setItem('recentConnections', JSON.stringify(updated));
+      return { ...prev, recentConnections: updated };
+    });
+  }, []);
+
+  const toggleFavorite = useCallback((ip, port) => {
+    setCollabState(prev => {
+      const current = prev.recentConnections || [];
+      const updated = current.map(c =>
+        (c.ip === ip && c.port === port) ? { ...c, isFavorite: !c.isFavorite } : c
+      );
+
+      updated.sort((a, b) => {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        return new Date(b.lastConnected) - new Date(a.lastConnected);
+      });
+
+      localStorage.setItem('recentConnections', JSON.stringify(updated));
+      return { ...prev, recentConnections: updated };
+    });
+  }, []);
+
+  const removeConnectionProfile = useCallback((ip, port) => {
+    setCollabState(prev => {
+      const updated = (prev.recentConnections || []).filter(c => !(c.ip === ip && c.port === port));
+      localStorage.setItem('recentConnections', JSON.stringify(updated));
+      return { ...prev, recentConnections: updated };
+    });
+  }, []);
+
+  // Load interfaces function
+  const loadInterfaces = useCallback(async () => {
+    if (window.electron && window.electron.getInterfaces) {
+      try {
+        const ifaces = await window.electron.getInterfaces();
+        setCollabState(prev => ({ ...prev, availableInterfaces: ifaces }));
+      } catch (e) {
+        console.error('Failed to load interfaces:', e);
+      }
+    }
+  }, []);
+
+  // State Refs for Socket Listeners (to avoid stale closures)
+  const dataRef = useRef({});
+  const actionsRef = useRef({});
+
+  useEffect(() => {
+    dataRef.current = {
+      collabState,
+      pages,
+      // ... (rest of useEffect content is same)
+      extensions
+      // Add other state as needed
+    };
+  });
+  // Build trigger state
+  const buildTimeoutRef = useRef(null);
+  const pollIntervalRef = useRef(null);
+  const countdownIntervalRef = useRef(null);
+  const discoveredServersRef = useRef([]);
+  const isBuildingRef = useRef(false);
+  const lastBuildTimeRef = useRef(null);
+  const [isBuilding, setIsBuilding] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [canBuild, setCanBuild] = useState(true);
+  const [buildCooldownSeconds, setBuildCooldownSeconds] = useState(0);
+  const [buildLogs, setBuildLogs] = useState([]); // New state for build logs
+
+  // Helper to update building state
+  const setIsBuildingState = useCallback((value) => {
+    isBuildingRef.current = value;
+    setIsBuilding(value);
+  }, []);
+
+  // Poll build status
+  const pollBuildStatus = useCallback(() => {
+    // ...
+  }, []);
+
+  const startPolling = useCallback(() => {
+    // ...
+  }, [pollBuildStatus, setIsBuildingState]);
+
+  // Trigger build function
+  const triggerBuild = useCallback((localOnly = false) => {
+    // ...
+  }, [setIsBuildingState, startPolling]);
+
+  // Manual trigger function (exposed to components)
+  const manualTriggerBuild = useCallback((localOnly = false) => {
+    // ...
+  }, [triggerBuild]);
+
+  // Schedule build 3 seconds after save (DISABLED FOR NOW)
+  const scheduleBuild = useCallback(() => {
+    // ...
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    // ...
+  }, []);
+  // Pages state
+  const [pages, setPages] = useState([]);
+  const [currentPageId, setCurrentPageId] = useState(null);
+
+  // Page Groups state
+  const [pageGroups, setPageGroups] = useState([]);
+
+  // Blog state
+  const [blogArticles, setBlogArticles] = useState([]);
+  const [currentBlogArticleId, setCurrentBlogArticleId] = useState(null);
+
+  // Database Rows state
+  const [catRows, setCatRows] = useState([]);
+  const [userRows, setUserRows] = useState([]);
+  const [inventoryRows, setInventoryRows] = useState([]);
+  const [customerRows, setCustomerRows] = useState([]);
+  const [employeeRows, setEmployeeRows] = useState([]);
+  const [attendanceRows, setAttendanceRows] = useState([]);
+  const [reservationRows, setReservationRows] = useState([]);
+  const [movieList, setMovieList] = useState([]);
+  const [componentRows, setComponentRows] = useState([]);
+
+  // Settings & System state
+  const [settings, setSettings] = useState({});
+  const [acl, setAcl] = useState({});
+  const [extensions, setExtensions] = useState({});
+
+  // Uploads state
+  const [uploads, setUploads] = useState([]);
+
+  // Loading state
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+  // Load Initial Data from Static JSONs
+  useEffect(() => {
+    const loadData = async () => {
+      const t = Date.now();
+      try {
+        const [
+          pagesRes, pageGroupsRes, blogRes,
+          catRes, userRes, invRes, attRes, resRes,
+          compRes, movieRes,
+          settingsRes, aclRes, extRes
+        ] = await Promise.all([
+          fetch(`/cms/pages.json?t=${t}`).catch(e => null),
+          fetch(`/cms/page-groups.json?t=${t}`).catch(e => null),
+          fetch(`/cms/blog-articles.json?t=${t}`).catch(e => null),
+          fetch(`/cms/cat-rows.json?t=${t}`).catch(e => null),
+          fetch(`/cms/user-rows.json?t=${t}`).catch(e => null),
+          fetch(`/cms/inventory-rows.json?t=${t}`).catch(e => null),
+          fetch(`/cms/attendance-rows.json?t=${t}`).catch(e => null),
+          fetch(`/cms/reservation-rows.json?t=${t}`).catch(e => null),
+          fetch(`/cms/component-rows.json?t=${t}`).catch(e => null),
+          fetch(`/cms/movie-list.json?t=${t}`).catch(e => null),
+          fetch(`/cms/settings.json?t=${t}`).catch(e => null),
+          fetch(`/cms/acl.json?t=${t}`).catch(e => null),
+          fetch(`/cms/extensions.json?t=${t}`).catch(e => null)
+        ]);
+
+        const parseJSON = async (res, defaultVal) => {
+          if (!res || !res.ok) return defaultVal;
+          try {
+            const data = await res.json();
+            return data || defaultVal;
+          } catch (e) {
+            console.warn('Failed to parse CMS JSON:', e);
+            return defaultVal;
+          }
+        };
+
+        setPages(await parseJSON(pagesRes, []));
+        setPageGroups(await parseJSON(pageGroupsRes, []));
+        setBlogArticles(await parseJSON(blogRes, []));
+        setCatRows(await parseJSON(catRes, []));
+        setUserRows(await parseJSON(userRes, []));
+        setInventoryRows(await parseJSON(invRes, []));
+        setAttendanceRows(await parseJSON(attRes, []));
+        setReservationRows(await parseJSON(resRes, []));
+        setComponentRows(await parseJSON(compRes, []));
+        setMovieList(await parseJSON(movieRes, []));
+        setSettings(await parseJSON(settingsRes, {}));
+        setAcl(await parseJSON(aclRes, {}));
+
+        let extData = await parseJSON(extRes, null);
+        if (!extData) {
+          // Fallback
+          try {
+            extData = JSON.parse(localStorage.getItem('extensions') || '{}');
+          } catch (e) { extData = {}; }
+        }
+        setExtensions(extData || {});
+
+        setIsDataLoaded(true);
+      } catch (e) {
+        console.error('Error loading initial CMS data:', e);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Upload functions
+  const fetchUploads = useCallback(async () => {
+    console.log('[fetchUploads] Called');
+    if (window.electron && window.electron.getUploads) {
+      try {
+        const files = await window.electron.getUploads();
+        console.log('[fetchUploads] Received files:', files);
+        setUploads(files);
+      } catch (e) {
+        console.error('[fetchUploads] Error fetching uploads:', e);
+      }
+    } else {
+      console.warn('[fetchUploads] window.electron.getUploads not found');
+    }
+  }, []);
+
+  const uploadFile = useCallback(async (file) => {
+    if (window.electron && window.electron.uploadFile) {
+      try {
+        const buffer = await file.arrayBuffer();
+        const result = await window.electron.uploadFile({ name: file.name, buffer });
+        if (result.status === 'success') {
+          // Broadcast upload to others
+          if (socketRef.current && collabState.isConnected) {
+            socketRef.current.emit('upload-event', { type: 'new-file', filename: file.name });
+          }
+          await fetchUploads(); // Refresh local list
+          return { url: result.url };
+        } else {
+          console.error('Upload failed:', result.error);
+          return { url: '' };
+        }
+      } catch (e) {
+        console.error('Upload exception:', e);
+        return { url: '' };
+      }
+    }
+    return Promise.resolve({ url: '' });
+  }, []);
+  const deleteFile = useCallback((fileId) => Promise.resolve(), []);
+  const replaceFile = useCallback((fileId, newFile) => Promise.resolve({ url: '' }), []);
+
+  // Collaboration Functions
+  const startCollaborationServer = useCallback(async (bindIP = null) => {
+    if (!window.electron) return;
+
+    // Check if other servers are already discovered - Single Server Policy
+    // Use Ref for most up-to-date check if called manually shortly after launch
+    if (discoveredServersRef.current.length > 0) {
+      alert('Cannot start server: Another collaboration server was detected on this network. Please connect to the existing server instead.');
+      return;
+    }
+
+    try {
+      const result = await window.electron.startServer(null, bindIP);
+      if (result.status === 'started' || result.status === 'already-running') {
+        console.log('Collaboration server started on', result.ip);
+
+        // Connect to local server as HOST
+        const serverPort = result.port || 8081; // Fallback to 8081 if not returned (should not happen with fix)
+        connectToCollaborationServer(`http://${result.ip === '0.0.0.0' ? 'localhost' : result.ip}:${serverPort}`, 'Host', true);
+
+        setCollabState(prev => ({
+          ...prev,
+          isServer: true,
+          serverIP: result.ip,
+          serverPort: serverPort
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to start collaboration server:', err);
+    }
+  }, []);
+
+  const connectToCollaborationServer = useCallback((url, name, isHost = false) => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+    }
+
+    const socket = io(url, {
+      reconnectionAttempts: 5,
+      timeout: 10000,
+      autoConnect: true
+    });
+    socketRef.current = socket;
+
+    setCollabState(prev => ({ ...prev, status: 'connecting', error: null }));
+
+    socket.on('connect', () => {
+      console.log('Connected to collaboration server');
+
+      // Save successful connection profile (if not host)
+      if (!isHost) {
+        try {
+          const urlObj = new URL(url);
+          saveConnectionProfile(urlObj.hostname, urlObj.port || '80', name);
+        } catch (e) { console.error('Error saving connection profile', e); }
+      }
+
+      setCollabState(prev => ({
+        ...prev,
+        isConnected: true,
+        status: 'connected',
+        error: null,
+        clientName: name,
+        socketId: socket.id,
+        wasConnectedAsClient: !isHost // Track that we were connected as a client
+      }));
+      socket.emit('register-client', { name, isHost });
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Disconnected from collaboration server:', reason);
+      setCollabState(prev => ({
+        ...prev,
+        isConnected: false,
+        status: 'disconnected', /* reason === 'io client disconnect' ? 'disconnected' : 'connecting' - socket.io auto-reconnects by default, so maybe 'connecting'? */
+        // actually if socket.io is reconnecting, it might be better to say 'connecting' if strictly not a manual disconnect
+        // But for UI clarity:
+        socketId: null
+      }));
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Collaboration connection error:', err);
+      setCollabState(prev => ({
+        ...prev,
+        isConnected: false,
+        status: 'error',
+        error: `Connection failed: ${err.message}`
+      }));
+    });
+
+    socket.on('reconnect_attempt', () => {
+      setCollabState(prev => ({ ...prev, status: 'connecting', error: null }));
+    });
+
+    socket.on('reconnect_failed', () => {
+      setCollabState(prev => ({ ...prev, status: 'error', error: 'Failed to reconnect after multiple attempts.' }));
+    });
+
+    socket.on('initial-state', ({ locks, clients }) => {
+      setCollabState(prev => ({
+        ...prev,
+        activeLocks: locks.map(([fieldId, lock]) => ({ fieldId, ...lock })),
+        connectedClients: clients
+      }));
+    });
+
+    socket.on('client-joined', (client) => {
+      setCollabState(prev => ({
+        ...prev,
+        connectedClients: [...prev.connectedClients, client]
+      }));
+
+      // Host Logic: Send full state to the new client
+      const currentData = dataRef.current;
+      if (currentData.collabState && currentData.collabState.isServer) {
+        const payload = {
+          pages: currentData.pages,
+          pageGroups: currentData.pageGroups,
+          blogArticles: currentData.blogArticles,
+          catRows: currentData.catRows,
+          userRows: currentData.userRows,
+          inventoryRows: currentData.inventoryRows,
+          attendanceRows: currentData.attendanceRows,
+          reservationRows: currentData.reservationRows,
+          componentRows: currentData.componentRows,
+          movieList: currentData.movieList,
+          settings: currentData.settings,
+          acl: currentData.acl,
+          extensions: currentData.extensions
+        };
+        socket.emit('sync-full-state', { targetSocketId: client.id, state: payload });
+      }
+    });
+
+    socket.on('hydrate-state', (state) => {
+      console.log('Received full state hydration from host');
+
+      // Clear ALL client CMS data from localStorage before replacing with server data.
+      // This prevents stale leftovers from a previous session.
+      const cmsKeys = [
+        'pages', 'pageGroups', 'blogArticles', 'catRows', 'userRows',
+        'inventoryRows', 'attendanceRows', 'reservationRows', 'componentRows',
+        'movieList', 'settings', 'acl', 'extensions'
+      ];
+      cmsKeys.forEach(key => localStorage.removeItem(key));
+
+      const actions = actionsRef.current;
+      if (state.pages) actions.savePages(state.pages, true);
+      if (state.pageGroups) actions.savePageGroups(state.pageGroups, true);
+      if (state.blogArticles) actions.saveBlogArticles(state.blogArticles, true);
+      if (state.catRows) actions.saveCatRows(state.catRows, true);
+      if (state.userRows) actions.saveUserRows(state.userRows, true);
+      if (state.inventoryRows) actions.saveInventoryRows(state.inventoryRows, true);
+      if (state.attendanceRows) actions.saveAttendanceRows(state.attendanceRows, true);
+      if (state.reservationRows) actions.saveReservationRows(state.reservationRows, true);
+      if (state.componentRows) actions.saveComponentRows(state.componentRows, true);
+      if (state.movieList) actions.saveMovieList(state.movieList, true);
+      if (state.settings) actions.saveSettings(state.settings, true);
+      if (state.acl) actions.saveAcl(state.acl, true);
+      if (state.extensions) actions.saveExtensions(state.extensions, true);
+    });
+
+    socket.on('client-left', (socketId) => {
+      setCollabState(prev => ({
+        ...prev,
+        connectedClients: prev.connectedClients.filter(c => c.id !== socketId)
+      }));
+    });
+
+    socket.on('client-list-update', (clients) => {
+      console.log('Received client list update:', clients);
+      setCollabState(prev => ({
+        ...prev,
+        connectedClients: clients
+      }));
+    });
+
+    socket.on('lock-update', (locksArray) => {
+      // Server sends Array.from(activeLocks.entries()) = [[fieldId, {socketId, clientName, timestamp}], ...]
+      setCollabState(prev => {
+        const newLocks = locksArray.map(([fieldId, lock]) => ({
+          fieldId,
+          clientName: lock.clientName,
+          socketId: lock.socketId
+        }));
+        return { ...prev, activeLocks: newLocks };
+      });
+    });
+
+    socket.on('lock-granted', ({ fieldId }) => {
+      console.log('Lock granted for:', fieldId);
+    });
+
+    socket.on('lock-denied', ({ fieldId, lockedBy }) => {
+      console.log('Lock denied for:', fieldId, 'held by', lockedBy);
+      // No alert — LockedInputWrapper already shows visual lock indicator.
+      // The alert was causing infinite retrigger loops when the field stayed focused.
+    });
+
+    socket.on('data-update', (update) => {
+      const actions = actionsRef.current;
+      // Handle various types
+      switch (update.type) {
+        case 'pages': actions.savePages(update.data, true); break;
+        case 'pageGroups': actions.savePageGroups(update.data, true); break;
+        case 'blogArticles': actions.saveBlogArticles(update.data, true); break;
+        case 'catRows': actions.saveCatRows(update.data, true); break;
+        case 'userRows': actions.saveUserRows(update.data, true); break;
+        case 'inventoryRows': actions.saveInventoryRows(update.data, true); break;
+        case 'attendanceRows': actions.saveAttendanceRows(update.data, true); break;
+        case 'reservationRows': actions.saveReservationRows(update.data, true); break;
+        case 'componentRows': actions.saveComponentRows(update.data, true); break;
+        case 'movieList': actions.saveMovieList(update.data, true); break;
+        case 'settings': actions.saveSettings(update.data, true); break;
+        case 'acl': actions.saveAcl(update.data, true); break;
+        case 'extensions': actions.saveExtensions(update.data, true); break;
+      }
+    });
+
+    socket.on('build-status', (status) => {
+      console.log('[useCMSData] Received build status:', status);
+      setIsBuildingState(status.isBuildInProgress);
+
+      if (status.isBuildInProgress) {
+        // Clear logs on new build start if we haven't already
+        // But status might come multiple times. Log '--- Build Started ---' usually handles clarity.
+      }
+
+      if (!status.isBuildInProgress && status.lastBuildTime) {
+        setLastSaved(status.lastBuildTime);
+        setCanBuild(true);
+        setBuildCooldownSeconds(0);
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+        }
+      }
+    });
+
+    socket.on('build-log-chunk', (chunk) => {
+      setBuildLogs(prev => {
+        // Keep last 1000 lines or so to avoid memory issues if needed, but for now simple append
+        const newLogs = [...prev, chunk];
+        if (newLogs.length > 2000) return newLogs.slice(newLogs.length - 2000);
+        return newLogs;
+      });
+    });
+
+    socket.on('build-cancelled', () => {
+      setIsBuildingState(false);
+      setCanBuild(true);
+      setBuildCooldownSeconds(0);
+      setBuildLogs(prev => [...prev, '\n!!! Build Cancelled by Host !!!\n']);
+    });
+
+    socket.on('build-error', (error) => {
+      console.error('[useCMSData] Remote build error:', error);
+      alert(`Remote build failed: ${error}`);
+      setIsBuildingState(false);
+      setCanBuild(true);
+      setBuildCooldownSeconds(0);
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+    });
+
+    socket.on('forwarded-update', (update) => {
+      // Host Logic: Receive update from Peer, apply it (serializing it)
+      console.log('Host received forwarded update from peer');
+      const actions = actionsRef.current;
+      // Apply update - this will trigger a save, which triggers a data-update broadcast from Host
+      // We pass 'false' for skipBroadcast because we WANT to broadcast the result to everyone
+      switch (update.type) {
+        case 'pages': actions.savePages(update.data); break;
+        case 'pageGroups': actions.savePageGroups(update.data); break;
+        case 'blogArticles': actions.saveBlogArticles(update.data); break;
+        case 'catRows': actions.saveCatRows(update.data); break;
+        case 'userRows': actions.saveUserRows(update.data); break;
+        case 'inventoryRows': actions.saveInventoryRows(update.data); break;
+        case 'attendanceRows': actions.saveAttendanceRows(update.data); break;
+        case 'reservationRows': actions.saveReservationRows(update.data); break;
+        case 'componentRows': actions.saveComponentRows(update.data); break;
+        case 'movieList': actions.saveMovieList(update.data); break;
+        case 'settings': actions.saveSettings(update.data); break;
+        case 'acl': actions.saveAcl(update.data); break;
+        case 'extensions': actions.saveExtensions(update.data); break;
+      }
+    });
+
+    socket.on('upload-event', () => {
+      fetchUploads();
+    });
+
+  }, [fetchUploads]);
+
+  // Listen for discovered servers & Auto-Negotiation
+  useEffect(() => {
+    if (window.electron && window.electron.onServerFound) {
+      // Discovery Listener
+      const removeListener = window.electron.onServerFound((serverInfo) => {
+        const now = Date.now();
+
+        // Update Ref
+        const existingRefIndex = discoveredServersRef.current.findIndex(s => s.ip === serverInfo.ip && s.port === serverInfo.port);
+        if (existingRefIndex >= 0) {
+          discoveredServersRef.current[existingRefIndex] = { ...serverInfo, lastSeen: now };
+        } else {
+          discoveredServersRef.current.push({ ...serverInfo, lastSeen: now });
+        }
+
+        setCollabState(prev => {
+          const existingIndex = prev.discoveredServers.findIndex(s => s.ip === serverInfo.ip && s.port === serverInfo.port);
+          if (existingIndex >= 0) {
+            const newServers = [...prev.discoveredServers];
+            newServers[existingIndex] = { ...serverInfo, lastSeen: now };
+            return { ...prev, discoveredServers: newServers };
+          }
+          return {
+            ...prev,
+            discoveredServers: [...prev.discoveredServers, { ...serverInfo, lastSeen: now }]
+          };
+        });
+      });
+
+      // Pruning Interval
+      const pruneInterval = setInterval(() => {
+        const now = Date.now();
+        setCollabState(prev => {
+          // Remove servers not seen in last 10 seconds (broadcast is every 3s)
+          const activeServers = prev.discoveredServers.filter(s => s.lastSeen && (now - s.lastSeen < 10000));
+
+          if (activeServers.length !== prev.discoveredServers.length) {
+            // Update ref as well to match
+            discoveredServersRef.current = activeServers;
+            return { ...prev, discoveredServers: activeServers };
+          }
+          return prev;
+        });
+      }, 5000); // Check every 5 seconds
+
+      // Auto-Negotiation: Wait for discovery, then decide role
+      const negotiationTimeout = setTimeout(() => {
+        if (discoveredServersRef.current.length > 0) {
+          console.log('Auto-Negotiation: Server detected, defaulting to Client mode.');
+        } else {
+          console.log('Auto-Negotiation: No server detected. Waiting for user action.');
+        }
+      }, 2000); // 2 second discovery window
+
+      return () => {
+        removeListener();
+        clearTimeout(negotiationTimeout);
+        clearInterval(pruneInterval);
+      };
+    }
+  }, [startCollaborationServer]);
+
+  const disconnectCollaboration = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+    if (collabState.isServer && window.electron) {
+      window.electron.stopServer();
+    }
+    setCollabState(prev => ({
+      ...prev,
+      isConnected: false,
+      isServer: false,
+      wasConnectedAsClient: false, // Manual disconnect — don't show banner
+      status: 'disconnected',
+      error: null,
+      activeLocks: [],
+      connectedClients: [],
+      socketId: null
+    }));
+  }, [collabState.isServer]);
+
+  const requestLock = useCallback((fieldId) => {
+    if (socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('request-lock', { fieldId, clientName: collabState.clientName });
+    }
+  }, [collabState.isConnected, collabState.clientName]);
+
+  const releaseLock = useCallback((fieldId) => {
+    if (socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('release-lock', { fieldId });
+    }
+  }, [collabState.isConnected]);
+
+  const forceReleaseLock = useCallback((fieldId) => {
+    if (socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('admin-force-release', { fieldId });
+    }
+  }, [collabState.isConnected]);
+
+  const broadcastSettingsUpdate = useCallback((newSettings) => {
+    if (socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'settings', data: newSettings });
+    }
+  }, [collabState.isConnected]);
+
+  const requestCancelBuild = useCallback(() => {
+    if (socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('request-cancel-build');
+    }
+  }, [collabState.isConnected]);
+
+  // Save build state to localStorage
+  useEffect(() => {
+    const buildState = {
+      isBuilding,
+      lastBuildTime: lastBuildTimeRef.current,
+      canBuild,
+      buildCooldownSeconds,
+    };
+    localStorage.setItem('buildState', JSON.stringify(buildState));
+  }, [isBuilding, canBuild, buildCooldownSeconds]);
+
+  // Save functions
+  const savePages = (newPages, skipBroadcast = false) => {
+    setPages(newPages);
+    localStorage.setItem('pages', JSON.stringify(newPages));
+    scheduleBuild();
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'pages', data: newPages });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('pages', newPages);
+    }
+  };
+
+  const saveCurrentPageId = (id) => {
+    setCurrentPageId(id);
+    localStorage.setItem('currentPageId', JSON.stringify(id));
+  };
+
+  const savePageGroups = (newGroups, skipBroadcast = false) => {
+    setPageGroups(newGroups);
+    localStorage.setItem('pageGroups', JSON.stringify(newGroups));
+    scheduleBuild();
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'pageGroups', data: newGroups });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('pageGroups', newGroups);
+    }
+  };
+
+  const saveBlogArticles = (articles, skipBroadcast = false) => {
+    setBlogArticles(articles);
+    localStorage.setItem('blogArticles', JSON.stringify(articles));
+    scheduleBuild();
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'blogArticles', data: articles });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('blogArticles', articles);
+    }
+  };
+
+  const saveCurrentBlogArticleId = (id) => {
+    setCurrentBlogArticleId(id);
+    localStorage.setItem('currentBlogArticleId', JSON.stringify(id));
+  };
+
+  const saveCatRows = (rows, skipBroadcast = false) => {
+    setCatRows(rows);
+    localStorage.setItem('catRows', JSON.stringify(rows));
+    scheduleBuild();
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'catRows', data: rows });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('catRows', rows);
+    }
+  };
+
+  const saveUserRows = (rows, skipBroadcast = false) => {
+    setUserRows(rows);
+    localStorage.setItem('userRows', JSON.stringify(rows));
+    scheduleBuild();
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'userRows', data: rows });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('userRows', rows);
+    }
+  };
+
+  const saveInventoryRows = (newRows, skipBroadcast = false) => {
+    setInventoryRows(newRows);
+    localStorage.setItem('inventoryRows', JSON.stringify(newRows));
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'inventoryRows', data: newRows });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('inventoryRows', newRows);
+    }
+  };
+
+  const saveCustomerRows = (newRows, skipBroadcast = false) => {
+    setCustomerRows(newRows);
+    localStorage.setItem('customerRows', JSON.stringify(newRows));
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'customerRows', data: newRows });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('customerRows', newRows);
+    }
+  };
+
+  const saveEmployeeRows = (newRows, skipBroadcast = false) => {
+    setEmployeeRows(newRows);
+    localStorage.setItem('employeeRows', JSON.stringify(newRows));
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'employeeRows', data: newRows });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('employeeRows', newRows);
+    }
+  };
+
+  const saveAttendanceRows = (newRows, skipBroadcast = false) => {
+    setAttendanceRows(newRows);
+    localStorage.setItem('attendanceRows', JSON.stringify(newRows));
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'attendanceRows', data: newRows });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('attendanceRows', newRows);
+    }
+  };
+
+  const saveReservationRows = (newRows, skipBroadcast = false) => {
+    setReservationRows(newRows);
+    localStorage.setItem('reservationRows', JSON.stringify(newRows));
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'reservationRows', data: newRows });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('reservationRows', newRows);
+    }
+  };
+
+  const saveMovieList = (newList, skipBroadcast = false) => {
+    setMovieList(newList);
+    localStorage.setItem('movieList', JSON.stringify(newList));
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'movieList', data: newList });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('movieList', newList);
+    }
+  };
+
+  const saveComponentRows = (rows, skipBroadcast = false) => {
+    setComponentRows(rows);
+    localStorage.setItem('componentRows', JSON.stringify(rows));
+    scheduleBuild();
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'componentRows', data: rows });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('componentRows', rows);
+    }
+  };
+
+  const saveSettings = (newSettings, skipBroadcast = false) => {
+    setSettings(newSettings);
+    localStorage.setItem('settings', JSON.stringify(newSettings));
+    scheduleBuild();
+
+    // Broadcast update if connected
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'settings', data: newSettings });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('settings', newSettings);
+    }
+  };
+
+  const saveAcl = (newAcl, skipBroadcast = false) => {
+    setAcl(newAcl);
+    localStorage.setItem('acl', JSON.stringify(newAcl));
+    scheduleBuild();
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'acl', data: newAcl });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('acl', newAcl);
+    }
+  };
+
+  const saveExtensions = (newExtensions, skipBroadcast = false) => {
+    setExtensions(newExtensions);
+    localStorage.setItem('extensions', JSON.stringify(newExtensions));
+    // Notify event-based listeners (SideMenu, Header, etc.) about the new extensions
+    window.dispatchEvent(new Event('extensions-updated'));
+    scheduleBuild();
+    if (!skipBroadcast && socketRef.current && collabState.isConnected) {
+      socketRef.current.emit('data-update', { type: 'extensions', data: newExtensions });
+    }
+    if ((collabState.isServer || !collabState.isConnected) && window.electron && window.electron.saveContent) {
+      window.electron.saveContent('extensions', newExtensions);
+    }
+  };
+
+  // Sync actionsRef
+  useEffect(() => {
+    actionsRef.current = {
+      savePages,
+      savePageGroups,
+      saveBlogArticles,
+      saveCatRows,
+      saveUserRows,
+      saveInventoryRows,
+      saveCustomerRows,
+      saveEmployeeRows,
+      saveAttendanceRows,
+      saveReservationRows,
+      saveComponentRows,
+      saveMovieList,
+      saveSettings,
+      saveAcl,
+      saveExtensions
+    };
+  }, [
+    savePages, savePageGroups, saveBlogArticles, saveCatRows, saveUserRows,
+    saveInventoryRows, saveCustomerRows, saveEmployeeRows, saveAttendanceRows,
+    saveReservationRows, saveComponentRows, saveMovieList, saveSettings,
+    saveAcl, saveExtensions
+  ]);
+
+  // Helper functions
+  const defaultPageRows = () => {
+    return [
+      // { component: 'Slide', fields: { 'Slide heading': '', 'Slide content': '' } },
+      // { component: 'Reviews', fields: { reviews: [{ 'Review logo': '', 'Review content': '', 'Review author': '' }] } }
+    ];
+  };
+
+  const addPage = (settings, initialData = {}) => {
+    const newId = initialData.id || Date.now().toString();
+
+    const isHomepage = initialData.slug === 'home';
+    const enTitle = isHomepage ? 'Homepage' : 'New Page';
+    const skTitle = isHomepage ? 'Domovská stránka' : 'Nová stránka';
+
+    const translations = {};
+    if (settings && settings.languages) {
+      settings.languages.forEach(lang => {
+        let title;
+        switch (lang.code) {
+          case 'sk':
+            title = skTitle;
+            break;
+          case 'en':
+          default:
+            title = enTitle;
+            break;
+        }
+        translations[lang.code] = {
+          title: title,
+          slug: initialData.slug || `new-page-${newId}`,
+          rows: defaultPageRows(),
+        };
+      });
+    }
+
+    const defaultLang = settings?.defaultLang || 'en';
+    const defaultTitle = translations[defaultLang]?.title || enTitle;
+
+    const newPage = {
+      id: newId,
+      title: defaultTitle,
+      slug: initialData.slug || `new-page-${newId}`,
+      rows: defaultPageRows(),
+      history: [],
+      lastEdited: Date.now(),
+      includeInMenu: false,
+      navigationDropdown: 'none', // none, header, footer
+      themeVersion: 'auto', // auto, light, dark
+      enforcedTheme: '', // empty string means use global theme
+      metaDescription: '',
+      buttonLinkColor: '',
+      sitemapPriority: 0.5,
+      ...initialData,
+      translations: translations,
+    };
+    const updatedPages = [...pages, newPage];
+    savePages(updatedPages);
+    return newId;
+  };
+
+  const deletePage = (id) => {
+    const updatedPages = pages.filter(p => p.id !== id);
+    savePages(updatedPages);
+    if (currentPageId === id) {
+      saveCurrentPageId(null);
+    }
+  };
+
+  const updatePage = (id, updates) => {
+    const updatedPages = pages.map(p =>
+      p.id === id ? { ...p, ...updates } : p
+    );
+    // Update local state immediately for responsive UI
+    setPages(updatedPages);
+    localStorage.setItem('pages', JSON.stringify(updatedPages));
+
+    // Debounce the actual save (disk + network broadcast) to avoid spam
+    if (!debouncedSavePagesRef.current) {
+      debouncedSavePagesRef.current = debounce((latestPages) => {
+        savePages(latestPages);
+      }, 800);
+    }
+    // Merge lastEdited into the debounced save
+    const pagesWithTimestamp = updatedPages.map(p =>
+      p.id === id ? { ...p, lastEdited: Date.now() } : p
+    );
+    debouncedSavePagesRef.current(pagesWithTimestamp);
+  };
+
+
+  const addBlogArticle = () => {
+    const newId = Date.now().toString();
+    const now = new Date();
+    const newArticle = {
+      id: newId,
+      title: 'New Article',
+      content: '',
+      author: '',
+      date: now.toISOString(),
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      slug: 'new-article-' + newId,
+      history: [],
+      category: '',
+      tags: '',
+      highlighted: false,
+      lastEdited: Date.now()
+    };
+    const updatedArticles = [...blogArticles, newArticle];
+    saveBlogArticles(updatedArticles);
+    return newId;
+  };
+
+  const deleteBlogArticle = (id) => {
+    const updatedArticles = blogArticles.filter(a => a.id !== id);
+    saveBlogArticles(updatedArticles);
+    if (currentBlogArticleId === id) {
+      saveCurrentBlogArticleId(null);
+    }
+  };
+
+  const updateBlogArticle = (id, updates) => {
+    const updatedArticles = blogArticles.map(a =>
+      a.id === id ? { ...a, ...updates } : a
+    );
+    // Update local state immediately for responsive UI
+    setBlogArticles(updatedArticles);
+    localStorage.setItem('blogArticles', JSON.stringify(updatedArticles));
+
+    // Debounce the actual save (disk + network broadcast) to avoid spam
+    if (!debouncedSaveBlogRef.current) {
+      debouncedSaveBlogRef.current = debounce((latestArticles) => {
+        saveBlogArticles(latestArticles);
+      }, 800);
+    }
+    const articlesWithTimestamp = updatedArticles.map(a =>
+      a.id === id ? { ...a, lastEdited: Date.now() } : a
+    );
+    debouncedSaveBlogRef.current(articlesWithTimestamp);
+  };
+
+  return {
+    // Pages
+    pages,
+    currentPageId,
+    pageGroups,
+    savePages,
+    saveCurrentPageId,
+    savePageGroups,
+    addPage,
+    deletePage,
+    updatePage,
+    defaultPageRows,
+
+    // Blog
+    blogArticles,
+    currentBlogArticleId,
+    saveBlogArticles,
+    saveCurrentBlogArticleId,
+    addBlogArticle,
+    deleteBlogArticle,
+    updateBlogArticle,
+
+    // Cats
+    catRows,
+    saveCatRows,
+
+    // Biometric
+    userRows,
+    saveUserRows,
+
+    // Components
+    componentRows,
+    saveComponentRows,
+
+    // Settings
+    settings,
+    saveSettings,
+
+    // ACL
+    acl,
+    saveAcl,
+
+    // Extensions
+    extensions,
+    saveExtensions,
+
+    // Build status
+    isBuilding,
+    lastSaved,
+    manualTriggerBuild,
+    canBuild,
+    buildCooldownSeconds,
+
+    // Data loaded flag
+    isDataLoaded,
+
+    // Rental
+    inventoryRows,
+    saveInventoryRows,
+    customerRows,
+    saveCustomerRows,
+    employeeRows,
+    saveEmployeeRows,
+    attendanceRows,
+    saveAttendanceRows,
+    reservationRows,
+    saveReservationRows,
+
+    // Movie List
+    movieList,
+    saveMovieList,
+
+    // Uploads
+    uploads,
+    fetchUploads,
+    uploadFile,
+    deleteFile,
+    replaceFile,
+
+    // Collaboration
+    collabState,
+    startCollaborationServer,
+    connectToCollaborationServer,
+    disconnectCollaboration,
+    requestLock,
+    releaseLock,
+    loadInterfaces,
+    recentConnections: collabState.recentConnections,
+    saveConnectionProfile,
+    toggleFavorite,
+    removeConnectionProfile,
+    forceReleaseLock,
+    buildLogs, // Added
+    requestCancelBuild // Added
+  };
+};
+
+export default useCMSData;
