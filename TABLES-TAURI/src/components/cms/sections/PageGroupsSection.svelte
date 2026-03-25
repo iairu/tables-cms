@@ -1,5 +1,6 @@
 <script>
   import { cmsData, savePageGroups } from '../../../stores/cmsData.js';
+  import ConfirmModal from '../../ConfirmModal.svelte';
   
   let cmsDataValue;
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
@@ -9,11 +10,29 @@
   let isEditingGroup = false;
   let editingGroup = null;
   let dragIndex = null;
+  let showDeleteConfirm = false;
+  let deleteGroupId = null;
   
   $: filteredGroups = cmsDataValue?.pageGroups?.filter(group =>
     !searchQuery ||
     group.name?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
+
+  // Get pages in the current editing group
+  $: pagesInEditingGroup = editingGroup 
+    ? (cmsDataValue.pages || []).filter(p => p.groups?.includes(editingGroup.id))
+    : [];
+  
+  // Get page names for display
+  function getPageName(pageId) {
+    const page = (cmsDataValue.pages || []).find(p => p.id === pageId);
+    return page?.name || pageId;
+  }
+  
+  function getPageSlug(pageId) {
+    const page = (cmsDataValue.pages || []).find(p => p.id === pageId);
+    return page?.slug || '';
+  }
   
   function handleNewGroup() {
     const newGroup = {
@@ -30,14 +49,26 @@
     
     savePageGroups([...(cmsDataValue.pageGroups || []), newGroup]);
   }
-  
-  function handleDeleteGroup(groupId) {
-    if (confirm('Are you sure you want to delete this group?')) {
-      savePageGroups((cmsDataValue.pageGroups || []).filter(g => g.id !== groupId));
-      if (selectedGroup?.id === groupId) {
+
+  function requestDeleteGroup(groupId) {
+    deleteGroupId = groupId;
+    showDeleteConfirm = true;
+  }
+
+  function confirmDeleteGroup() {
+    showDeleteConfirm = false;
+    if (deleteGroupId) {
+      savePageGroups((cmsDataValue.pageGroups || []).filter(g => g.id !== deleteGroupId));
+      if (selectedGroup?.id === deleteGroupId) {
         selectedGroup = null;
       }
+      deleteGroupId = null;
     }
+  }
+
+  function cancelDeleteGroup() {
+    showDeleteConfirm = false;
+    deleteGroupId = null;
   }
   
   function handleSelectGroup(group) {
@@ -72,20 +103,35 @@
   
   function handleAddPage() {
     if (!editingGroup) return;
-    
+
+    // Get pages that are NOT in this group
     const availablePages = (cmsDataValue.pages || []).filter(
-      p => !editingGroup.pages?.includes(p.id)
+      p => !p.groups?.includes(editingGroup.id)
     );
-    
+
     if (availablePages.length === 0) {
       alert('No available pages to add');
       return;
     }
-    
-    const pageId = prompt('Enter page ID to add (or select from list):\n\nAvailable: ' + 
+
+    const pageId = prompt('Enter page ID to add (or select from list):\n\nAvailable: ' +
       availablePages.map(p => `${p.id} - ${p.name}`).join('\n'));
-    
+
     if (pageId && availablePages.find(p => p.id === pageId)) {
+      // Add group ID to page's groups array
+      const page = availablePages.find(p => p.id === pageId);
+      const updatedPage = {
+        ...page,
+        groups: [...(page.groups || []), editingGroup.id]
+      };
+      
+      // Save the updated page
+      const pages = (cmsDataValue.pages || []).map(p => 
+        p.id === pageId ? updatedPage : p
+      );
+      savePages(pages);
+      
+      // Update editing group to reflect the change
       editingGroup = {
         ...editingGroup,
         pages: [...(editingGroup.pages || []), pageId]
@@ -95,7 +141,25 @@
   
   function handleRemovePage(pageIndex) {
     if (!editingGroup) return;
+
+    const pageId = editingGroup.pages[pageIndex];
     
+    // Remove group ID from page's groups array
+    const page = (cmsDataValue.pages || []).find(p => p.id === pageId);
+    if (page) {
+      const updatedPage = {
+        ...page,
+        groups: (page.groups || []).filter(id => id !== editingGroup.id)
+      };
+      
+      // Save the updated page
+      const pages = (cmsDataValue.pages || []).map(p => 
+        p.id === pageId ? updatedPage : p
+      );
+      savePages(pages);
+    }
+    
+    // Update editing group to reflect the change
     editingGroup = {
       ...editingGroup,
       pages: editingGroup.pages.filter((_, i) => i !== pageIndex)
@@ -131,19 +195,9 @@
     
     pages.splice(dragIndex, 1);
     pages.splice(index, 0, draggedItem);
-    
+
     editingGroup = { ...editingGroup, pages };
     dragIndex = null;
-  }
-  
-  function getPageName(pageId) {
-    const page = (cmsDataValue.pages || []).find(p => p.id === pageId);
-    return page?.name || pageId;
-  }
-  
-  function getPageSlug(pageId) {
-    const page = (cmsDataValue.pages || []).find(p => p.id === pageId);
-    return page?.slug || '';
   }
 </script>
 
@@ -188,7 +242,7 @@
             </div>
             <button
               class="btn-icon btn-danger btn-xs"
-              on:click={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }}
+              on:click={(e) => { e.stopPropagation(); requestDeleteGroup(group.id); }}
             >
               <i class="fas fa-trash"></i>
             </button>
@@ -275,9 +329,9 @@
                 </button>
               </div>
               
-              {#if editingGroup.pages && editingGroup.pages.length > 0}
+              {#if pagesInEditingGroup && pagesInEditingGroup.length > 0}
                 <div class="pages-list">
-                  {#each editingGroup.pages as pageId, index}
+                  {#each pagesInEditingGroup as page, index}
                     <div
                       class="page-row"
                       draggable="true"
@@ -289,14 +343,14 @@
                         <i class="fas fa-grip-vertical"></i>
                       </div>
                       <div class="page-info">
-                        <span class="page-name">{getPageName(pageId)}</span>
-                        <span class="page-slug">/{getPageSlug(pageId)}</span>
+                        <span class="page-name">{page.name || 'Untitled'}</span>
+                        <span class="page-slug">/{page.slug || 'no-slug'}</span>
                       </div>
                       <div class="page-actions">
                         <button class="btn-icon btn-xs" on:click={() => handleMovePage(index, 'up')} disabled={index === 0}>
                           <i class="fas fa-chevron-up"></i>
                         </button>
-                        <button class="btn-icon btn-xs" on:click={() => handleMovePage(index, 'down')} disabled={index === editingGroup.pages.length - 1}>
+                        <button class="btn-icon btn-xs" on:click={() => handleMovePage(index, 'down')} disabled={index === pagesInEditingGroup.length - 1}>
                           <i class="fas fa-chevron-down"></i>
                         </button>
                         <button class="btn-icon btn-danger btn-xs" on:click={() => handleRemovePage(index)}>
@@ -393,6 +447,17 @@
       {/if}
     </div>
   </div>
+  
+  <ConfirmModal
+    isOpen={showDeleteConfirm}
+    title="Delete Group"
+    message="Are you sure you want to delete this group? This action cannot be undone."
+    confirmText="Delete"
+    cancelText="Cancel"
+    isDestructive={true}
+    onConfirm={confirmDeleteGroup}
+    onCancel={cancelDeleteGroup}
+  />
 </div>
 
 <style>

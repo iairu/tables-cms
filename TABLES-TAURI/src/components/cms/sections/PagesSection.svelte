@@ -1,10 +1,11 @@
 <script>
   import { cmsData, savePages, saveComponentRows } from '../../../stores/cmsData.js';
   import AssetManagerModal from '../AssetManagerModal.svelte';
-  
+  import ConfirmModal from '../../ConfirmModal.svelte';
+
   let cmsDataValue;
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
-  
+
   let searchQuery = '';
   let selectedPage = null;
   let isEditingPage = false;
@@ -12,6 +13,13 @@
   let showAssetManager = false;
   let activeComponentIndex = null;
   let activeField = null;
+  let showDeleteConfirm = false;
+  let deletePageId = null;
+  let showComponentDropdown = false;
+  let isSaving = false;
+  let lastSaved = null;
+  let saveError = null;
+  let showGroupDropdown = false;
   
   // Available component types
   const componentTypes = [
@@ -45,16 +53,69 @@
     
     savePages([...(cmsDataValue.pages || []), newPage]);
   }
-  
-  function handleDeletePage(pageId) {
-    if (confirm('Are you sure you want to delete this page?')) {
-      savePages((cmsDataValue.pages || []).filter(p => p.id !== pageId));
-      if (selectedPage?.id === pageId) {
+
+  function requestDeletePage(pageId) {
+    deletePageId = pageId;
+    showDeleteConfirm = true;
+  }
+
+  function confirmDeletePage() {
+    showDeleteConfirm = false;
+    if (deletePageId) {
+      savePages((cmsDataValue.pages || []).filter(p => p.id !== deletePageId));
+      if (selectedPage?.id === deletePageId) {
         selectedPage = null;
       }
+      deletePageId = null;
     }
   }
+
+  function cancelDeletePage() {
+    showDeleteConfirm = false;
+    deletePageId = null;
+  }
+
+  // Get available page groups
+  $: availableGroups = cmsDataValue?.pageGroups || [];
+
+  // Get groups assigned to current editing page
+  $: assignedGroupIds = editingPage?.groups || [];
   
+  // Check if a group is assigned to the current page
+  function isGroupAssigned(groupId) {
+    return assignedGroupIds.includes(groupId);
+  }
+  
+  // Toggle group assignment for current page
+  function toggleGroupAssignment(groupId) {
+    if (!editingPage) return;
+    
+    const currentGroups = editingPage.groups || [];
+    let newGroups;
+    
+    if (currentGroups.includes(groupId)) {
+      // Remove from group
+      newGroups = currentGroups.filter(id => id !== groupId);
+    } else {
+      // Add to group
+      newGroups = [...currentGroups, groupId];
+    }
+    
+    editingPage = {
+      ...editingPage,
+      groups: newGroups
+    };
+  }
+  
+  // Get group names for display
+  function getGroupNames(groupIds) {
+    if (!groupIds || groupIds.length === 0) return 'No groups';
+    return availableGroups
+      .filter(g => groupIds.includes(g.id))
+      .map(g => g.name)
+      .join(', ');
+  }
+
   function handleSelectPage(page) {
     selectedPage = page;
     isEditingPage = false;
@@ -70,14 +131,30 @@
   function handleSavePage() {
     if (!editingPage) return;
     
-    const pages = (cmsDataValue.pages || []).map(p => 
-      p.id === editingPage.id ? { ...editingPage, updatedAt: Date.now() } : p
-    );
-    
-    savePages(pages);
-    selectedPage = { ...editingPage };
-    isEditingPage = false;
-    editingPage = null;
+    isSaving = true;
+    saveError = null;
+
+    try {
+      const pages = (cmsDataValue.pages || []).map(p =>
+        p.id === editingPage.id ? { ...editingPage, updatedAt: Date.now() } : p
+      );
+
+      savePages(pages);
+      selectedPage = { ...editingPage };
+      isEditingPage = false;
+      editingPage = null;
+      lastSaved = new Date();
+      
+      // Clear saved indicator after 3 seconds
+      setTimeout(() => {
+        lastSaved = null;
+      }, 3000);
+    } catch (error) {
+      saveError = 'Failed to save page';
+      console.error('Save error:', error);
+    } finally {
+      isSaving = false;
+    }
   }
   
   function handleCancelEdit() {
@@ -259,7 +336,7 @@
             </div>
             <button
               class="btn-icon btn-danger btn-xs"
-              on:click={(e) => { e.stopPropagation(); handleDeletePage(page.id); }}
+              on:click={(e) => { e.stopPropagation(); requestDeletePage(page.id); }}
             >
               <i class="fas fa-trash"></i>
             </button>
@@ -304,7 +381,58 @@
                 placeholder="page-slug"
               />
             </div>
-            <button class="btn-success" on:click={handleSavePage}>
+            
+            <div class="group-assignment">
+              <div class="dropdown" class:open={showGroupDropdown}>
+                <button 
+                  class="btn-secondary btn-sm"
+                  on:click={() => showGroupDropdown = !showGroupDropdown}
+                  title="Assign to groups"
+                >
+                  <i class="fas fa-layer-group"></i>
+                  <span>{getGroupNames(editingPage?.groups)}</span>
+                  <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-content dropdown-content-groups">
+                  {#if availableGroups.length > 0}
+                    {#each availableGroups as group}
+                      <label class="group-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={isGroupAssigned(group.id)}
+                          on:change={() => toggleGroupAssignment(group.id)}
+                        />
+                        <span>{group.name}</span>
+                      </label>
+                    {/each}
+                  {:else}
+                    <div class="no-groups">
+                      <i class="fas fa-info-circle"></i>
+                      <span>No groups available. Create a group first.</span>
+                    </div>
+                  {/if}
+                </div>
+              </div>
+            </div>
+            
+            <div class="save-indicator">
+              {#if lastSaved}
+                <span class="save-status saved">
+                  <i class="fas fa-check"></i>
+                  Saved
+                </span>
+              {:else if saveError}
+                <span class="save-status error">
+                  <i class="fas fa-exclamation-circle"></i>
+                  {saveError}
+                </span>
+              {:else if isSaving}
+                <span class="save-status saving">
+                  <i class="fas fa-spinner fa-spin"></i>
+                </span>
+              {/if}
+            </div>
+            <button class="btn-success" on:click={handleSavePage} disabled={isSaving}>
               <i class="fas fa-save"></i> Save
             </button>
           </div>
@@ -314,13 +442,18 @@
             <div class="components-section">
               <div class="section-header">
                 <h3><i class="fas fa-th"></i> Components</h3>
-                <div class="dropdown">
-                  <button class="btn-primary">
+                <div class="dropdown" class:open={showComponentDropdown}>
+                  <button 
+                    class="btn-primary" 
+                    on:focus={() => showComponentDropdown = true}
+                    on:blur={() => setTimeout(() => showComponentDropdown = false, 200)}
+                    on:click={() => showComponentDropdown = !showComponentDropdown}
+                  >
                     <i class="fas fa-plus"></i> Add Component
                   </button>
                   <div class="dropdown-content">
                     {#each componentTypes as type}
-                      <button class="dropdown-item" on:click={() => handleAddComponent(type)}>
+                      <button class="dropdown-item" on:click={() => { handleAddComponent(type); showComponentDropdown = false; }}>
                         <i class="fas {type.icon}"></i>
                         <span>{type.name}</span>
                       </button>
@@ -522,6 +655,17 @@
       onSelect={handleAssetSelect}
     />
   {/if}
+  
+  <ConfirmModal
+    isOpen={showDeleteConfirm}
+    title="Delete Page"
+    message="Are you sure you want to delete this page? This action cannot be undone."
+    confirmText="Delete"
+    cancelText="Cancel"
+    isDestructive={true}
+    onConfirm={confirmDeletePage}
+    onCancel={cancelDeletePage}
+  />
 </div>
 
 <style>
@@ -679,7 +823,108 @@
     align-items: center;
     gap: 16px;
   }
-  
+
+  .save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .save-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
+  }
+
+  .save-status.saved {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .save-status.error {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .save-status.saving {
+    color: #2563eb;
+  }
+
+  .save-status i {
+    font-size: 14px;
+  }
+
+  .group-assignment {
+    display: flex;
+    align-items: center;
+    margin: 0 8px;
+  }
+
+  .group-assignment .btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 200px;
+  }
+
+  .group-assignment .btn-secondary span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 140px;
+  }
+
+  .dropdown-content-groups {
+    min-width: 220px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .group-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 4px;
+  }
+
+  .group-checkbox:hover {
+    background: #f8fafc;
+  }
+
+  .group-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  .group-checkbox span {
+    font-size: 14px;
+    color: #475569;
+  }
+
+  .no-groups {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    color: #64748b;
+    font-size: 13px;
+  }
+
+  .no-groups i {
+    color: #2563eb;
+  }
+
   .editor-title {
     flex: 1;
     display: flex;
@@ -734,7 +979,7 @@
   .dropdown {
     position: relative;
   }
-  
+
   .dropdown-content {
     display: none;
     position: absolute;
@@ -748,8 +993,8 @@
     margin-top: 8px;
     overflow: hidden;
   }
-  
-  .dropdown:hover .dropdown-content {
+
+  .dropdown.open .dropdown-content {
     display: block;
   }
   

@@ -1,15 +1,27 @@
 <script>
   export let isOpen = false;
   export let onClose = () => {};
-  
+
   let noteText = '';
-  
-  function handleSave() {
-    // Save notes to localStorage
-    localStorage.setItem('notes-extension-data', noteText);
-    onClose();
+  let saveTimeout = null;
+  let lastSaved = null;
+
+  function autoSave() {
+    // Clear any pending save
+    if (saveTimeout) clearTimeout(saveTimeout);
+    
+    // Debounce save - wait 500ms after last keystroke
+    saveTimeout = setTimeout(() => {
+      localStorage.setItem('notes-extension-data', noteText);
+      lastSaved = new Date();
+      console.log('Notes auto-saved at', lastSaved.toLocaleTimeString());
+    }, 500);
   }
-  
+
+  function handleInput() {
+    autoSave();
+  }
+
   // Load existing notes
   if (typeof window !== 'undefined' && isOpen) {
     noteText = localStorage.getItem('notes-extension-data') || '';
@@ -29,14 +41,21 @@
     <div class="notes-content">
       <textarea
         bind:value={noteText}
-        placeholder="Write your notes here..."
+        on:input={handleInput}
+        placeholder="Write your notes here... (auto-saves)"
       ></textarea>
     </div>
-    
+
     <div class="notes-footer">
-      <button class="btn-primary" on:click={handleSave}>
-        <i class="fas fa-save"></i> Save Notes
-      </button>
+      <span class="save-status">
+        {#if lastSaved}
+          <i class="fas fa-check"></i>
+          Saved at {lastSaved.toLocaleTimeString()}
+        {:else}
+          <i class="fas fa-clock"></i>
+          Type to auto-save...
+        {/if}
+      </span>
     </div>
   </aside>
 {/if}
@@ -135,28 +154,20 @@
   }
   
   .notes-footer {
-    padding: 16px 20px;
-    border-top: 1px solid #e2e8f0;
-  }
-  
-  .btn-primary {
-    width: 100%;
     padding: 12px 20px;
-    border: none;
-    background: #2563eb;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+  }
+
+  .save-status {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
-    transition: background 0.2s;
+    font-size: 12px;
+    color: #64748b;
   }
-  
-  .btn-primary:hover {
-    background: #1d4ed8;
+
+  .save-status i {
+    font-size: 14px;
   }
 </style>

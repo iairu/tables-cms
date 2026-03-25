@@ -182,28 +182,34 @@ export function savePageGroups(pageGroups, skipBroadcast = false) {
 }
 
 export function saveBlogArticles(articles, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, blogArticles: articles }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('blogArticles', articles);
+    }
+    return { ...data, blogArticles: articles };
+  });
   saveToStorage('blogArticles', articles);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('blogArticles', articles);
-  }
   scheduleBuild();
 }
 
 export function saveSettings(settings, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, settings }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('settings', settings);
+    }
+    return { ...data, settings };
+  });
   saveToStorage('settings', settings);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('settings', settings);
-  }
 }
 
 export function saveExtensions(extensions, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, extensions }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('extensions', extensions);
+    }
+    return { ...data, extensions };
+  });
   saveToStorage('extensions', extensions);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('extensions', extensions);
-  }
 }
 
 export function saveCatRows(rows, skipBroadcast = false) {

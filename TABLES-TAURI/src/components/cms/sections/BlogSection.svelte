@@ -1,6 +1,7 @@
 <script>
   import { cmsData, saveBlogArticles } from '../../../stores/cmsData.js';
   import AssetManagerModal from '../AssetManagerModal.svelte';
+  import ConfirmModal from '../../ConfirmModal.svelte';
   
   let cmsDataValue;
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
@@ -13,6 +14,11 @@
   let activeField = null;
   let activeLanguage = 'en';
   let showTranslations = false;
+  let showDeleteConfirm = false;
+  let deleteArticleId = null;
+  let isSaving = false;
+  let lastSaved = null;
+  let saveError = null;
   
   // Supported languages
   const languages = [
@@ -78,14 +84,26 @@
     
     saveBlogArticles([...(cmsDataValue.blogArticles || []), newArticle]);
   }
-  
-  function handleDeleteArticle(articleId) {
-    if (confirm('Are you sure you want to delete this article?')) {
-      saveBlogArticles((cmsDataValue.blogArticles || []).filter(a => a.id !== articleId));
-      if (selectedArticle?.id === articleId) {
+
+  function requestDeleteArticle(articleId) {
+    deleteArticleId = articleId;
+    showDeleteConfirm = true;
+  }
+
+  function confirmDeleteArticle() {
+    showDeleteConfirm = false;
+    if (deleteArticleId) {
+      saveBlogArticles((cmsDataValue.blogArticles || []).filter(a => a.id !== deleteArticleId));
+      if (selectedArticle?.id === deleteArticleId) {
         selectedArticle = null;
       }
+      deleteArticleId = null;
     }
+  }
+
+  function cancelDeleteArticle() {
+    showDeleteConfirm = false;
+    deleteArticleId = null;
   }
   
   function handleSelectArticle(article) {
@@ -106,14 +124,30 @@
   function handleSaveArticle() {
     if (!editingArticle) return;
     
-    const articles = (cmsDataValue.blogArticles || []).map(a => 
-      a.id === editingArticle.id ? { ...editingArticle, updatedAt: Date.now() } : a
-    );
-    
-    saveBlogArticles(articles);
-    selectedArticle = { ...editingArticle };
-    isEditingArticle = false;
-    editingArticle = null;
+    isSaving = true;
+    saveError = null;
+
+    try {
+      const articles = (cmsDataValue.blogArticles || []).map(a =>
+        a.id === editingArticle.id ? { ...editingArticle, updatedAt: Date.now() } : a
+      );
+
+      saveBlogArticles(articles);
+      selectedArticle = { ...editingArticle };
+      isEditingArticle = false;
+      editingArticle = null;
+      lastSaved = new Date();
+      
+      // Clear saved indicator after 3 seconds
+      setTimeout(() => {
+        lastSaved = null;
+      }, 3000);
+    } catch (error) {
+      saveError = 'Failed to save article';
+      console.error('Save error:', error);
+    } finally {
+      isSaving = false;
+    }
   }
   
   function handleCancelEdit() {
@@ -268,7 +302,7 @@
             </div>
             <button
               class="btn-icon btn-danger btn-xs"
-              on:click={(e) => { e.stopPropagation(); handleDeleteArticle(article.id); }}
+              on:click={(e) => { e.stopPropagation(); requestDeleteArticle(article.id); }}
             >
               <i class="fas fa-trash"></i>
             </button>
@@ -300,6 +334,23 @@
               <i class="fas fa-arrow-left"></i> Back
             </button>
             <div class="editor-actions">
+              {#if lastSaved}
+                <span class="save-status saved">
+                  <i class="fas fa-check"></i>
+                  Saved {lastSaved.toLocaleTimeString()}
+                </span>
+              {:else if saveError}
+                <span class="save-status error">
+                  <i class="fas fa-exclamation-circle"></i>
+                  {saveError}
+                </span>
+              {:else if isSaving}
+                <span class="save-status saving">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  Saving...
+                </span>
+              {/if}
+              
               {#if editingArticle.status === 'published'}
                 <button class="btn-secondary" on:click={handleUnpublishArticle}>
                   <i class="fas fa-eye-slash"></i> Unpublish
@@ -309,7 +360,7 @@
                   <i class="fas fa-check"></i> Publish
                 </button>
               {/if}
-              <button class="btn-primary" on:click={handleSaveArticle}>
+              <button class="btn-primary" on:click={handleSaveArticle} disabled={isSaving}>
                 <i class="fas fa-save"></i> Save
               </button>
             </div>
@@ -613,6 +664,17 @@
       onSelect={handleAssetSelect}
     />
   {/if}
+  
+  <ConfirmModal
+    isOpen={showDeleteConfirm}
+    title="Delete Article"
+    message="Are you sure you want to delete this article? This action cannot be undone."
+    confirmText="Delete"
+    cancelText="Cancel"
+    isDestructive={true}
+    onConfirm={confirmDeleteArticle}
+    onCancel={cancelDeleteArticle}
+  />
 </div>
 
 <style>
@@ -797,7 +859,37 @@
   
   .editor-actions {
     display: flex;
+    align-items: center;
     gap: 8px;
+  }
+
+  .save-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin-right: 8px;
+  }
+
+  .save-status.saved {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .save-status.error {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .save-status.saving {
+    color: #2563eb;
+  }
+
+  .save-status i {
+    font-size: 14px;
   }
   
   .editor-content {

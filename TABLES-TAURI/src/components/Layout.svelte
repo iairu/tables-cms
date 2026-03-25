@@ -5,6 +5,7 @@
   import LoadingBar from './LoadingBar.svelte';
   import LoadingSkeleton from './LoadingSkeleton.svelte';
   import NotesSidebar from './NotesSidebar.svelte';
+  import ProjectMenu from './ProjectMenu.svelte';
   import { cmsData } from '../stores/cmsData.js';
   import { isLoading, showLoading, hideLoading } from '../stores/loading.js';
   
@@ -95,6 +96,8 @@
     extensions={effectiveExtensions}
   />
   
+  <ProjectMenu />
+
   <main class="main-content">
     <SideMenu
       currentSection={currentSection}

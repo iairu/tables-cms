@@ -35,22 +35,27 @@
     const sections = {
       'settings': true,
       'extensions': true,
-      'uploads': true
+      'uploads': true,
+      // Default sections always available
+      'pages': true,
+      'page-groups': true,
+      'blog': true,
+      'cats': true  // Pedigree always available by default
     };
-    
-    // Core sections
-    if (ext['pages-extension-enabled'] !== false) sections['pages'] = true;
-    if (ext['page-groups-extension-enabled'] !== false) sections['page-groups'] = true;
-    if (ext['blog-extension-enabled'] !== false) sections['blog'] = true;
-    
-    // Database extensions
+
+    // Core sections (only hide if explicitly disabled)
+    if (ext['pages-extension-enabled'] === false) sections['pages'] = false;
+    if (ext['page-groups-extension-enabled'] === false) sections['page-groups'] = false;
+    if (ext['blog-extension-enabled'] === false) sections['blog'] = false;
+
+    // Database extensions (require explicit enable)
     if (ext['pedigree-extension-enabled']) sections['cats'] = true;
     if (ext['personal-extension-enabled']) sections['personal'] = true;
     if (ext['biometric-extension-enabled']) sections['biometric'] = true;
     if (ext['medical-extension-enabled']) sections['medical'] = true;
     if (ext['financial-extension-enabled']) sections['financial'] = true;
     if (ext['legal-extension-enabled']) sections['legal'] = true;
-    
+
     // Rental extension
     if (ext['rental-extension-enabled']) {
       sections['rental-inventory'] = true;
@@ -60,20 +65,20 @@
       sections['rental-reservations'] = true;
       sections['rental-calendar'] = true;
     }
-    
+
     // Other extensions
     if (ext['movie-tracker-enabled']) sections['movietracker'] = true;
-    
+
     return sections;
   }
 
   function getCurrentSection(path) {
     const sections = getAvailableSections();
-    
-    if (path.startsWith('/cms/pages')) return sections['pages'] ? 'pages' : 'settings';
-    if (path.startsWith('/cms/page-groups')) return sections['page-groups'] ? 'page-groups' : 'settings';
-    if (path.startsWith('/cms/blog')) return sections['blog'] ? 'blog' : 'settings';
-    if (path.startsWith('/cms/pedigree')) return sections['cats'] ? 'cats' : 'settings';
+
+    if (path.startsWith('/cms/pages')) return 'pages';
+    if (path.startsWith('/cms/page-groups')) return 'page-groups';
+    if (path.startsWith('/cms/blog')) return 'blog';
+    if (path.startsWith('/cms/pedigree')) return 'cats';
     if (path.startsWith('/cms/personal')) return sections['personal'] ? 'personal' : 'settings';
     if (path.startsWith('/cms/inventory')) return sections['rental-inventory'] ? 'rental-inventory' : 'settings';
     if (path.startsWith('/cms/attendance')) return sections['rental-attendance'] ? 'rental-attendance' : 'settings';
@@ -123,9 +128,12 @@
       currentRoute = window.location.pathname || '/cms/settings';
       currentSection = getCurrentSection(currentRoute);
       
-      // Apply saved theme
+      // Apply saved theme - preserve other classes
       const savedTheme = localStorage.getItem('tables-theme') || 'default';
-      document.body.className = `theme-${savedTheme}`;
+      const currentClasses = document.body.className
+        .split(' ')
+        .filter(cls => !cls.startsWith('theme-'));
+      document.body.className = [...currentClasses, `theme-${savedTheme}`].join(' ');
       
       // Listen for popstate
       window.addEventListener('popstate', handlePopState);

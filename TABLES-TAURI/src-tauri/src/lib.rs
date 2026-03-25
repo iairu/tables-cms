@@ -3,8 +3,14 @@ use std::path::PathBuf;
 use std::fs;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
-use tauri::Manager;
+use tauri::{Manager, Emitter};
 use tauri_plugin_fs::FsExt;
+use std::sync::Mutex;
+use once_cell::sync::Lazy;
+
+// Recent projects storage
+static RECENT_PROJECTS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
+static CURRENT_PROJECT: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
 
 // Attachment file storage
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -232,6 +238,120 @@ fn guess_mime_type(path: &PathBuf) -> String {
     }
 }
 
+// Project file structure
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ProjectFile {
+    pub name: String,
+    pub version: String,
+    pub created_at: u64,
+    pub updated_at: u64,
+    pub data: serde_json::Value,
+}
+
+#[tauri::command]
+fn open_project(app: tauri::AppHandle, path: String) -> Result<ProjectFile, String> {
+    // Read project file
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read project file: {}", e))?;
+    
+    let project: ProjectFile = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse project file: {}", e))?;
+    
+    // Add to recent projects
+    {
+        let mut recent = RECENT_PROJECTS.lock().unwrap();
+        if !recent.contains(&path) {
+            recent.insert(0, path.clone());
+            if recent.len() > 10 {
+                recent.truncate(10);
+            }
+        }
+        
+        // Update current project
+        let mut current = CURRENT_PROJECT.lock().unwrap();
+        *current = Some(path.clone());
+        
+        // Emit event to frontend
+        let _ = app.emit("project-opened", &project);
+        let _ = app.emit("recent-projects-updated", recent.clone());
+    }
+    
+    Ok(project)
+}
+
+#[tauri::command]
+fn save_project(app: tauri::AppHandle, path: String, data: serde_json::Value) -> Result<String, String> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .as_secs();
+    
+    let project = ProjectFile {
+        name: path.split('/').last().unwrap_or("project").replace(".json.cms", ""),
+        version: "1.0.0".to_string(),
+        created_at: now,
+        updated_at: now,
+        data,
+    };
+    
+    let content = serde_json::to_string_pretty(&project)
+        .map_err(|e| format!("Failed to serialize project: {}", e))?;
+    
+    fs::write(&path, &content)
+        .map_err(|e| format!("Failed to write project file: {}", e))?;
+    
+    // Update current project
+    {
+        let mut current = CURRENT_PROJECT.lock().unwrap();
+        *current = Some(path.clone());
+        
+        // Add to recent
+        let mut recent = RECENT_PROJECTS.lock().unwrap();
+        if !recent.contains(&path) {
+            recent.insert(0, path.clone());
+            if recent.len() > 10 {
+                recent.truncate(10);
+            }
+        }
+        
+        let _ = app.emit("project-saved", &path);
+        let _ = app.emit("recent-projects-updated", recent.clone());
+    }
+    
+    Ok(path)
+}
+
+#[tauri::command]
+fn close_project(app: tauri::AppHandle) -> Result<(), String> {
+    {
+        let mut current = CURRENT_PROJECT.lock().unwrap();
+        *current = None;
+    }
+    
+    let _ = app.emit("project-closed", ());
+    Ok(())
+}
+
+#[tauri::command]
+fn get_recent_projects() -> Result<Vec<String>, String> {
+    let recent = RECENT_PROJECTS.lock().unwrap();
+    Ok(recent.clone())
+}
+
+#[tauri::command]
+fn clear_recent_projects(app: tauri::AppHandle) -> Result<(), String> {
+    let mut recent = RECENT_PROJECTS.lock().unwrap();
+    recent.clear();
+    let _ = app.emit("recent-projects-updated", Vec::<String>::new());
+    Ok(())
+}
+
+#[tauri::command]
+fn get_current_project() -> Result<Option<String>, String> {
+    let current = CURRENT_PROJECT.lock().unwrap();
+    Ok(current.clone())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -244,7 +364,12 @@ pub fn run() {
             delete_attachment,
             upload_file,
             get_uploads,
-            delete_upload
+            delete_upload,
+            open_project,
+            save_project,
+            close_project,
+            get_recent_projects,
+            clear_recent_projects
         ])
         .setup(|app| {
             let fs_scope = app.fs_scope();
@@ -255,29 +380,59 @@ pub fn run() {
                 }
             }
 
-            // Create native menu with reload shortcuts (macOS only)
+            // Create native menu with project management and reload (macOS only)
             #[cfg(target_os = "macos")]
             {
-                use tauri::menu::{Submenu, MenuItem};
-                
-                // Get the default "Window" menu or create custom reload menu
+                use tauri::menu::{Submenu, MenuItem, PredefinedMenuItem};
+
+                // Project menu items
+                let open_project = MenuItem::with_id(app, "open_project", "Open Project…", true, Some("CmdOrCtrl+O"))?;
+                let save_project = MenuItem::with_id(app, "save_project", "Save Project…", true, Some("CmdOrCtrl+S"))?;
+                let close_project = MenuItem::with_id(app, "close_project", "Close Project", true, Some("CmdOrCtrl+W"))?;
+                let recent_separator = PredefinedMenuItem::separator(app)?;
+                let clear_recent = MenuItem::with_id(app, "clear_recent", "Clear Recent Projects", true, None::<&str>)?;
+
+                // Project submenu
+                let project_menu = Submenu::with_items(app, "Project", true, &[
+                    &open_project,
+                    &save_project,
+                    &close_project,
+                    &recent_separator,
+                    &clear_recent,
+                ])?;
+
+                // View menu with reload
                 let reload = MenuItem::with_id(app, "reload", "Reload", true, Some("CmdOrCtrl+R"))?;
                 let force_reload = MenuItem::with_id(app, "force_reload", "Force Reload", true, Some("Cmd+Shift+R"))?;
-                
-                // Create a View submenu with reload options
-                let view_submenu = Submenu::with_items(app, "View", true, &[
+                let view_menu = Submenu::with_items(app, "View", true, &[
                     &reload,
                     &force_reload,
                 ])?;
-                
+
                 // Add to the menubar
-                app.menu().ok_or("Failed to get menu")?.append(&view_submenu)?;
+                let menu = app.menu().ok_or("Failed to get menu")?;
+                menu.append(&project_menu)?;
+                menu.append(&view_menu)?;
             }
 
             Ok(())
         })
         .on_menu_event(|app, event| {
             match event.id.as_ref() {
+                "open_project" => {
+                    let _ = app.emit("menu-open-project", ());
+                }
+                "save_project" => {
+                    let _ = app.emit("menu-save-project", ());
+                }
+                "close_project" => {
+                    let _ = app.emit("menu-close-project", ());
+                }
+                "clear_recent" => {
+                    let mut recent = RECENT_PROJECTS.lock().unwrap();
+                    recent.clear();
+                    let _ = app.emit("recent-projects-updated", Vec::<String>::new());
+                }
                 "reload" => {
                     if let Some(window) = app.get_webview_window("main") {
                         let _ = window.eval("window.location.reload()");

@@ -3631,6 +3631,7 @@ dependencies = [
  "base64 0.21.7",
  "dirs 5.0.1",
  "log",
+ "once_cell",
  "serde",
  "serde_json",
  "tauri",

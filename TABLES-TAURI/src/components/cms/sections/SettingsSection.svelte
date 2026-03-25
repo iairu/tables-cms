@@ -4,9 +4,36 @@
   let cmsDataValue;
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
   
-  // Local settings state
-  let localSettings = {};
-  let activeTab = 'general';
+  // Local settings state with defaults
+  let localSettings = {
+    siteName: '',
+    siteDescription: '',
+    domain: '',
+    author: '',
+    language: 'en',
+    timezone: 'UTC',
+    theme: 'default',
+    vercelApiKey: '',
+    vercelTeamId: '',
+    vercelProjectId: '',
+    autoBuild: false,
+    generateSitemap: true,
+    generateRobots: true,
+    collaborationEnabled: false,
+    collabServerUrl: '',
+    collabUserName: '',
+    gdprConsent: false,
+    devMode: false,
+    showComponentIds: false
+  };
+
+  // Initialize local settings from CMS data
+  $: if (cmsDataValue?.settings) {
+    localSettings = {
+      ...localSettings,
+      ...cmsDataValue.settings
+    };
+  }
   
   // Available themes
   const themes = [
@@ -22,40 +49,7 @@
     { id: 'ayu', name: 'Ayu', description: 'Warm dark theme', preview: '#ffcc66' }
   ];
   
-  // Initialize local settings from CMS data
-  $: if (cmsDataValue?.settings) {
-    localSettings = { ...cmsDataValue.settings };
-  }
-  
-  function handleSaveSettings() {
-    saveSettings(localSettings);
-  }
-  
-  function handleThemeSelect(themeId) {
-    localSettings = { ...localSettings, theme: themeId };
-    
-    // Apply theme immediately
-    document.body.className = `theme-${themeId}`;
-    localStorage.setItem('tables-theme', themeId);
-    
-    handleSaveSettings();
-  }
-  
-  function handleBuildLocally() {
-    triggerBuild(true);
-  }
-  
-  function handleBuildAndDeploy() {
-    if (!localSettings.vercelApiKey) {
-      alert('Please set your Vercel API key in settings first.');
-      return;
-    }
-    triggerBuild(false);
-  }
-  
-  function getCurrentTheme() {
-    return themes.find(t => t.id === localSettings.theme) || themes[0];
-  }
+  let activeTab = 'general';
   
   const tabs = [
     { id: 'general', label: 'General', icon: 'fa-cog' },
@@ -64,6 +58,40 @@
     { id: 'collaboration', label: 'Collaboration', icon: 'fa-users' },
     { id: 'advanced', label: 'Advanced', icon: 'fa-wrench' }
   ];
+  
+  function handleSaveSettings() {
+    saveSettings(localSettings);
+  }
+
+  function handleThemeSelect(themeId) {
+    localSettings = { ...localSettings, theme: themeId };
+
+    // Apply theme immediately - preserve other classes
+    const currentClasses = document.body.className
+      .split(' ')
+      .filter(cls => !cls.startsWith('theme-'));
+    document.body.className = [...currentClasses, `theme-${themeId}`].join(' ');
+
+    localStorage.setItem('tables-theme', themeId);
+
+    handleSaveSettings();
+  }
+
+  function handleBuildLocally() {
+    triggerBuild(true);
+  }
+
+  function handleBuildAndDeploy() {
+    if (!localSettings.vercelApiKey) {
+      alert('Please set your Vercel API key in settings first.');
+      return;
+    }
+    triggerBuild(false);
+  }
+
+  function getCurrentTheme() {
+    return themes.find(t => t.id === localSettings.theme) || themes[0];
+  }
 </script>
 
 <div class="settings-section">
