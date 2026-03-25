@@ -1,4 +1,15 @@
 <script>
+  let appWindow = null;
+
+  // Dynamically import Tauri API only when available
+  if (typeof window !== 'undefined' && window.__TAURI__) {
+    import('@tauri-apps/api/window').then(module => {
+      appWindow = module.appWindow;
+    }).catch(() => {
+      // Tauri API not available (browser mode)
+    });
+  }
+
   export let onVisitDomain = () => {};
   export let onBuildAndDeploy = () => {};
   export let onBuildLocally = () => {};
@@ -9,19 +20,7 @@
   export let vercelApiKey = '';
   export let buildCooldownSeconds = 0;
   export let disableImport = false;
-  
-  function handleCloseApp() {
-    // In Tauri, we'd call appWindow.close()
-    console.log('Close app');
-  }
-  
-  function handleMinimizeApp() {
-    console.log('Minimize app');
-  }
-  
-  function handleMaximizeApp() {
-    console.log('Maximize app');
-  }
+  export let extensions = {};
 </script>
 
 <header class="header">
@@ -31,43 +30,31 @@
       TABLES CMS
     </h1>
   </div>
-  
-  <div class="header-center">
-    <div class="window-controls">
-      <button class="window-control" title="Minimize" on:click={handleMinimizeApp}>
-        <i class="fas fa-minus"></i>
-      </button>
-      <button class="window-control" title="Maximize" on:click={handleMaximizeApp}>
-        <i class="fas fa-square"></i>
-      </button>
-      <button class="window-control close" title="Close" on:click={handleCloseApp}>
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-  </div>
-  
+
   <div class="header-right">
-    <button 
-      class="btn-icon" 
-      title="Notes"
-      on:click={onToggleNotesSidebar}
-    >
-      <i class="fas fa-sticky-note"></i>
-    </button>
-    
+    {#if extensions?.['notes-extension-enabled']}
+      <button
+        class="btn-icon"
+        title="Notes"
+        on:click={onToggleNotesSidebar}
+      >
+        <i class="fas fa-sticky-note"></i>
+      </button>
+    {/if}
+
     {#if canBuild && !isBuilding}
-      <button 
-        class="btn-primary" 
+      <button
+        class="btn-primary"
         on:click={() => onBuildLocally()}
         title="Build Locally"
       >
         <i class="fas fa-hammer"></i>
         Build Locally
       </button>
-      
+
       {#if domain && vercelApiKey}
-        <button 
-          class="btn-success" 
+        <button
+          class="btn-success"
           on:click={() => onBuildAndDeploy()}
           title="Build & Deploy"
         >
@@ -81,13 +68,14 @@
         Building...
       </button>
     {/if}
-    
-    <a 
-      href={domain} 
-      target="_blank" 
+
+    <a
+      href={domain || '#'}
+      target="_blank"
       rel="noopener noreferrer"
       class="btn-secondary"
       title="Visit Domain"
+      style="pointer-events: {domain ? 'auto' : 'none'}; opacity: {domain ? 1 : 0.5};"
     >
       <i class="fas fa-external-link-alt"></i>
       Visit
@@ -97,6 +85,10 @@
 
 <style>
   .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -104,13 +96,14 @@
     background: white;
     border-bottom: 1px solid #e2e8f0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    z-index: 1000;
   }
-  
+
   .header-left {
     display: flex;
     align-items: center;
   }
-  
+
   .app-title {
     font-size: 20px;
     font-weight: 700;
@@ -120,50 +113,17 @@
     align-items: center;
     gap: 10px;
   }
-  
+
   .app-title i {
     color: #2563eb;
   }
-  
-  .header-center {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-  }
-  
-  .window-controls {
-    display: flex;
-    gap: 8px;
-  }
-  
-  .window-control {
-    width: 30px;
-    height: 30px;
-    border: none;
-    background: #f1f5f9;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-  }
-  
-  .window-control:hover {
-    background: #e2e8f0;
-  }
-  
-  .window-control.close:hover {
-    background: #ef4444;
-    color: white;
-  }
-  
+
   .header-right {
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  
+
   .btn-icon {
     width: 36px;
     height: 36px;
@@ -177,11 +137,11 @@
     transition: background 0.2s;
     color: #475569;
   }
-  
+
   .btn-icon:hover {
     background: #e2e8f0;
   }
-  
+
   .btn-primary,
   .btn-success,
   .btn-secondary,
@@ -198,38 +158,45 @@
     transition: all 0.2s;
     text-decoration: none;
   }
-  
+
   .btn-primary {
     background: #2563eb;
     color: white;
   }
-  
+
   .btn-primary:hover {
     background: #1d4ed8;
   }
-  
+
   .btn-success {
     background: #10b981;
     color: white;
   }
-  
+
   .btn-success:hover {
     background: #059669;
   }
-  
+
   .btn-secondary {
     background: white;
     color: #475569;
     border: 1px solid #e2e8f0;
   }
-  
+
   .btn-secondary:hover {
     background: #f8fafc;
   }
-  
+
   .btn-disabled {
     background: #cbd5e1;
     color: #64748b;
     cursor: not-allowed;
+  }
+
+  /* Prevent icon flashing */
+  .header i,
+  .fas {
+    will-change: auto;
+    backface-visibility: hidden;
   }
 </style>

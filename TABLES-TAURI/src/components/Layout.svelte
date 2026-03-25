@@ -11,13 +11,23 @@
   export let currentSection = 'settings';
   export let currentRoute = '/cms/settings';
   export let onNavigate = () => {};
-  
+  export let extensions = {};
+
   let cmsDataValue;
   let isLoadingValue;
   let isNotesSidebarOpen = false;
-  
+  let localExtensions = {};
+
   const unsubscribeCms = cmsData.subscribe(value => cmsDataValue = value);
   const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
+
+  // Keep extensions in sync with cmsData
+  $: if (cmsDataValue?.extensions) {
+    localExtensions = cmsDataValue.extensions;
+  }
+  
+  // Use local extensions or fallback to prop
+  $: effectiveExtensions = localExtensions || extensions || {};
   
   // Show reconnection banner
   $: showReconnectBanner = cmsDataValue?.collabState?.wasConnectedAsClient && !cmsDataValue?.collabState?.isConnected;
@@ -27,7 +37,7 @@
       cmsDataValue.manualTriggerBuild(localOnly);
     }
   }
-  
+
   function toggleNotesSidebar() {
     isNotesSidebarOpen = !isNotesSidebarOpen;
   }
@@ -82,6 +92,7 @@
     vercelApiKey={cmsDataValue?.settings?.vercelApiKey}
     buildCooldownSeconds={cmsDataValue?.buildCooldownSeconds}
     disableImport={cmsDataValue?.collabState?.isConnected && !cmsDataValue?.collabState?.isServer}
+    extensions={effectiveExtensions}
   />
   
   <main class="main-content">
@@ -95,6 +106,7 @@
       domain={cmsDataValue?.settings?.domain}
       vercelApiKey={cmsDataValue?.settings?.vercelApiKey}
       onNavigate={onNavigate}
+      extensions={effectiveExtensions}
     />
     
     <div class="content-area">
@@ -106,7 +118,7 @@
     </div>
   </main>
   
-  {#if cmsDataValue?.extensions?.['notes-extension-enabled']}
+  {#if effectiveExtensions?.['notes-extension-enabled']}
     <NotesSidebar isOpen={isNotesSidebarOpen} onClose={toggleNotesSidebar} />
   {/if}
 </div>
@@ -152,6 +164,7 @@
     position: relative;
     display: flex;
     transition: margin-right 0.3s;
+    padding-top: 65px; /* Account for fixed header height */
   }
   
   .content-area {

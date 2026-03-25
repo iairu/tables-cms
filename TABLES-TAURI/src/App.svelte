@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import Layout from './components/Layout.svelte';
   import SettingsSection from './components/cms/sections/SettingsSection.svelte';
   import PagesSection from './components/cms/sections/PagesSection.svelte';
@@ -14,61 +15,157 @@
   import ExtensionsSection from './components/cms/sections/ExtensionsSection.svelte';
   import UploadsSection from './components/cms/sections/UploadsSection.svelte';
   import MoviesSection from './components/cms/sections/MoviesSection.svelte';
-  import { cmsData } from './stores/cmsData.js';
-  import { isLoading } from './stores/loading.js';
-  
+  import { cmsData, loadCMSData } from './stores/cmsData.js';
+  import { isLoading, showLoading, hideLoading } from './stores/loading.js';
+
   const isBrowser = typeof window !== 'undefined';
 
   // Simple client-side routing
   let currentRoute = '/cms/settings';
   let currentSection = 'settings';
+  let cmsDataValue;
+  let isLoadingValue;
+  
+  const unsubscribeCms = cmsData.subscribe(value => cmsDataValue = value);
+  const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
 
-  if (isBrowser) {
-    currentRoute = window.location.pathname || '/cms/settings';
-    currentSection = getCurrentSection(currentRoute);
-    
-    // Listen for navigation
-    const handleNavigation = () => {
-      currentRoute = window.location.pathname;
-      currentSection = getCurrentSection(currentRoute);
+  // Get available sections based on extensions
+  function getAvailableSections() {
+    const ext = cmsDataValue?.extensions || {};
+    const sections = {
+      'settings': true,
+      'extensions': true,
+      'uploads': true
     };
     
-    window.addEventListener('popstate', handleNavigation);
+    // Core sections
+    if (ext['pages-extension-enabled'] !== false) sections['pages'] = true;
+    if (ext['page-groups-extension-enabled'] !== false) sections['page-groups'] = true;
+    if (ext['blog-extension-enabled'] !== false) sections['blog'] = true;
+    
+    // Database extensions
+    if (ext['pedigree-extension-enabled']) sections['cats'] = true;
+    if (ext['personal-extension-enabled']) sections['personal'] = true;
+    if (ext['biometric-extension-enabled']) sections['biometric'] = true;
+    if (ext['medical-extension-enabled']) sections['medical'] = true;
+    if (ext['financial-extension-enabled']) sections['financial'] = true;
+    if (ext['legal-extension-enabled']) sections['legal'] = true;
+    
+    // Rental extension
+    if (ext['rental-extension-enabled']) {
+      sections['rental-inventory'] = true;
+      sections['rental-attendance'] = true;
+      sections['rental-customers'] = true;
+      sections['rental-employees'] = true;
+      sections['rental-reservations'] = true;
+      sections['rental-calendar'] = true;
+    }
+    
+    // Other extensions
+    if (ext['movie-tracker-enabled']) sections['movietracker'] = true;
+    
+    return sections;
   }
 
   function getCurrentSection(path) {
-    if (path.startsWith('/cms/pages')) return 'pages';
-    if (path.startsWith('/cms/page-groups')) return 'page-groups';
-    if (path.startsWith('/cms/blog')) return 'blog';
-    if (path.startsWith('/cms/pedigree')) return 'cats';
-    if (path.startsWith('/cms/personal')) return 'personal';
-    if (path.startsWith('/cms/inventory')) return 'rental-inventory';
-    if (path.startsWith('/cms/attendance')) return 'rental-attendance';
-    if (path.startsWith('/cms/customers')) return 'rental-customers';
-    if (path.startsWith('/cms/employees')) return 'rental-employees';
-    if (path.startsWith('/cms/reservations')) return 'rental-reservations';
-    if (path.startsWith('/cms/calendar')) return 'rental-calendar';
+    const sections = getAvailableSections();
+    
+    if (path.startsWith('/cms/pages')) return sections['pages'] ? 'pages' : 'settings';
+    if (path.startsWith('/cms/page-groups')) return sections['page-groups'] ? 'page-groups' : 'settings';
+    if (path.startsWith('/cms/blog')) return sections['blog'] ? 'blog' : 'settings';
+    if (path.startsWith('/cms/pedigree')) return sections['cats'] ? 'cats' : 'settings';
+    if (path.startsWith('/cms/personal')) return sections['personal'] ? 'personal' : 'settings';
+    if (path.startsWith('/cms/inventory')) return sections['rental-inventory'] ? 'rental-inventory' : 'settings';
+    if (path.startsWith('/cms/attendance')) return sections['rental-attendance'] ? 'rental-attendance' : 'settings';
+    if (path.startsWith('/cms/customers')) return sections['rental-customers'] ? 'rental-customers' : 'settings';
+    if (path.startsWith('/cms/employees')) return sections['rental-employees'] ? 'rental-employees' : 'settings';
+    if (path.startsWith('/cms/reservations')) return sections['rental-reservations'] ? 'rental-reservations' : 'settings';
+    if (path.startsWith('/cms/calendar')) return sections['rental-calendar'] ? 'rental-calendar' : 'settings';
     if (path.startsWith('/cms/settings')) return 'settings';
     if (path.startsWith('/cms/extensions')) return 'extensions';
     if (path.startsWith('/cms/uploads')) return 'uploads';
-    if (path.startsWith('/cms/movietracker')) return 'movietracker';
+    if (path.startsWith('/cms/movietracker')) return sections['movietracker'] ? 'movietracker' : 'settings';
+    if (path.startsWith('/cms/biometric')) return sections['biometric'] ? 'biometric' : 'settings';
+    if (path.startsWith('/cms/medical')) return sections['medical'] ? 'medical' : 'settings';
+    if (path.startsWith('/cms/financial')) return sections['financial'] ? 'financial' : 'settings';
+    if (path.startsWith('/cms/legal')) return sections['legal'] ? 'legal' : 'settings';
     return 'settings';
   }
 
   function navigate(path) {
     if (isBrowser) {
+      showLoading();
       window.history.pushState({}, '', path);
       currentRoute = path;
       currentSection = getCurrentSection(path);
+      
+      // Hide loading after a short delay
+      setTimeout(() => {
+        hideLoading();
+      }, 300);
     }
   }
+  
+  // Handle browser back/forward
+  function handlePopState() {
+    if (isBrowser) {
+      currentRoute = window.location.pathname;
+      currentSection = getCurrentSection(currentRoute);
+    }
+  }
+  
+  onMount(() => {
+    if (isBrowser) {
+      // Load CMS data
+      loadCMSData();
+      
+      // Set initial route
+      currentRoute = window.location.pathname || '/cms/settings';
+      currentSection = getCurrentSection(currentRoute);
+      
+      // Apply saved theme
+      const savedTheme = localStorage.getItem('tables-theme') || 'default';
+      document.body.className = `theme-${savedTheme}`;
+      
+      // Listen for popstate
+      window.addEventListener('popstate', handlePopState);
+      
+      // Listen for custom navigation events
+      window.addEventListener('tables-navigation', (e) => {
+        currentSection = e.detail.section;
+      });
+      
+      // Keyboard shortcuts for reload
+      window.addEventListener('keydown', (e) => {
+        // Cmd+R or Ctrl+R - Soft reload
+        if ((e.metaKey || e.ctrlKey) && e.key === 'r') {
+          e.preventDefault();
+          window.location.reload();
+        }
+        // Cmd+Shift+R or Ctrl+Shift+R - Force reload
+        if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'R') {
+          e.preventDefault();
+          window.location.reload(true);
+        }
+      });
+    }
+    
+    return () => {
+      unsubscribeCms();
+      unsubscribeLoading();
+      if (isBrowser) {
+        window.removeEventListener('popstate', handlePopState);
+      }
+    };
+  });
 </script>
 
 <main>
-  <Layout 
+  <Layout
     currentSection={currentSection}
     currentRoute={currentRoute}
     onNavigate={navigate}
+    extensions={cmsDataValue?.extensions}
   >
     {#if currentSection === 'settings'}
       <SettingsSection />
@@ -98,6 +195,15 @@
       <UploadsSection />
     {:else if currentSection === 'movietracker'}
       <MoviesSection />
+    {:else}
+      <div class="section-not-found">
+        <i class="fas fa-exclamation-circle"></i>
+        <h2>Section Not Available</h2>
+        <p>This section may require enabling an extension.</p>
+        <button class="btn-primary" on:click={() => navigate('/cms/extensions')}>
+          <i class="fas fa-puzzle-piece"></i> Go to Extensions
+        </button>
+      </div>
     {/if}
   </Layout>
 </main>
@@ -107,14 +213,58 @@
     margin: 0;
     padding: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f8fafc;
+    background: var(--bg-primary);
+    color: var(--text-primary);
   }
-  
+
   :global(#app) {
     min-height: 100vh;
   }
-  
+
   main {
     min-height: 100vh;
+  }
+  
+  .section-not-found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+  }
+  
+  .section-not-found i {
+    font-size: 64px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+  
+  .section-not-found h2 {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+  
+  .section-not-found p {
+    color: var(--text-tertiary);
+    margin-bottom: 24px;
+  }
+  
+  .btn-primary {
+    padding: 10px 20px;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+  }
+  
+  .btn-primary:hover {
+    background: var(--color-primary-dark);
   }
 </style>

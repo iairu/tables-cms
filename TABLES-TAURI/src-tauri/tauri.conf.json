@@ -19,7 +19,9 @@
         "resizable": true,
         "fullscreen": false,
         "minWidth": 800,
-        "minHeight": 600
+        "minHeight": 600,
+        "center": true,
+        "focus": true
       }
     ],
     "security": {
@@ -33,19 +35,20 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["app"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png"
     ],
     "macOS": {
-      "minimumSystemVersion": "10.15",
+      "minimumSystemVersion": "12.0",
       "frameworks": [],
       "exceptionDomain": "",
       "signingIdentity": null,
       "entitlements": null,
-      "infoPlist": "Info.plist"
+      "infoPlist": "Info.plist",
+      "files": {}
     },
     "windows": {
       "certificateThumbprint": null,

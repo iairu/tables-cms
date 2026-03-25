@@ -19,5 +19,11 @@ export default defineConfig({
   },
   server: {
     port: 5173
+  },
+  // Vite serves files from 'public' directory automatically
+  // Configure Vite to properly serve CMS JSON files
+  appType: 'spa',
+  optimizeDeps: {
+    exclude: ['@tauri-apps/api']
   }
 });

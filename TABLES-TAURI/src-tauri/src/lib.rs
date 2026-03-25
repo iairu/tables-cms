@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::fs;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
-use tauri::{Manager, Emitter};
+use tauri::Manager;
 use tauri_plugin_fs::FsExt;
 
 // Attachment file storage
@@ -254,7 +254,42 @@ pub fn run() {
                     let _: Result<(), _> = fs_scope.allow_directory(&download_dir, true);
                 }
             }
+
+            // Create native menu with reload shortcuts (macOS only)
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::menu::{Submenu, MenuItem};
+                
+                // Get the default "Window" menu or create custom reload menu
+                let reload = MenuItem::with_id(app, "reload", "Reload", true, Some("CmdOrCtrl+R"))?;
+                let force_reload = MenuItem::with_id(app, "force_reload", "Force Reload", true, Some("Cmd+Shift+R"))?;
+                
+                // Create a View submenu with reload options
+                let view_submenu = Submenu::with_items(app, "View", true, &[
+                    &reload,
+                    &force_reload,
+                ])?;
+                
+                // Add to the menubar
+                app.menu().ok_or("Failed to get menu")?.append(&view_submenu)?;
+            }
+
             Ok(())
+        })
+        .on_menu_event(|app, event| {
+            match event.id.as_ref() {
+                "reload" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.eval("window.location.reload()");
+                    }
+                }
+                "force_reload" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.eval("window.location.reload(true)");
+                    }
+                }
+                _ => {}
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

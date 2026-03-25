@@ -1,18 +1,74 @@
 # TABLES CMS - Tauri + Svelte
 
-A modern, performant Content Management System built with Tauri and Svelte. This is a rewrite of the original TABLES Electron + Gatsby + React CMS with improved performance and a smaller footprint.
+A modern, performant Content Management System built with Tauri and Svelte. This is a complete rewrite of the original Electron + Gatsby + React CMS with improved performance, smaller footprint, and seamless Vercel deployment.
+
+![TABLES CMS](../TABLES.app/Contents/Resources/static/assets/tables-feature-highlight-banner.png)
 
 ## Features
 
+### Core Features
 - 🎨 **Modern UI** - Clean, responsive interface built with Svelte
 - ⚡ **Fast Performance** - Tauri backend provides native performance
 - 📦 **Small Footprint** - Much smaller bundle size compared to Electron
 - 🔒 **Secure** - Rust backend with secure file handling
-- 🔄 **Real-time Collaboration** - Multi-user editing with Socket.io
+- 🔄 **Real-time Collaboration** - Multi-user editing with Socket.io (coming soon)
 - 📝 **Rich Content** - WYSIWYG editors for content creation
 - 🗂️ **Asset Management** - Built-in file upload and management
 - 🌐 **Multi-language** - Support for multiple languages
-- 🚀 **Deployment** - Vercel deployment integration
+- 🚀 **Vercel Deployment** - One-click deployment to Vercel
+- 🎨 **Theme System** - 10 built-in themes with easy switching
+
+### Extensions
+- **Pages** - Component-based page builder
+- **Blog** - Full-featured blogging engine with multilingual support
+- **Page Groups** - Organize pages with dropdown menus
+- **Pedigree** - Track cat pedigrees and breeding records
+- **Rental Management** - Complete rental business solution
+- **Movie Tracker** - Personal movie tracking with IMDB integration
+- **Personal Database** - Personal information storage
+- **Biometric Database** - Demo biometric data (⚠️ demo only)
+- **Medical Records** - Health records management (⚠️ demo only)
+- **Financial Database** - Financial tracking (⚠️ demo only)
+- **Legal Records** - Legal information (⚠️ demo only)
+
+## Prerequisites
+
+- **Node.js** 18+ 
+- **Rust** 1.77.2+ (for Tauri desktop app)
+- **npm** or **yarn**
+
+## Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/iairu/tables-cms.git
+cd tables-cms/TABLES-TAURI
+
+# Install dependencies
+npm install
+```
+
+### Development
+
+```bash
+# Run in browser mode (Vite dev server)
+npm run dev
+
+# Run as Tauri desktop app
+npm run tauri:dev
+```
+
+### Building
+
+```bash
+# Build for web (Vercel deployment)
+npm run build:ssg
+
+# Build Tauri desktop app
+npm run tauri:build
+```
 
 ## Project Structure
 
@@ -24,19 +80,22 @@ TABLES-TAURI/
 │   │   │   └── sections/
 │   │   │       ├── SettingsSection.svelte
 │   │   │       ├── PagesSection.svelte
+│   │   │       ├── PageGroupsSection.svelte
 │   │   │       ├── BlogSection.svelte
+│   │   │       ├── ExtensionsSection.svelte
 │   │   │       └── ... (other sections)
 │   │   ├── Layout.svelte
 │   │   ├── Header.svelte
 │   │   ├── SideMenu.svelte
-│   │   └── ...
+│   │   ├── LoadingBar.svelte
+│   │   └── LoadingSkeleton.svelte
 │   ├── stores/
 │   │   ├── cmsData.js
 │   │   └── loading.js
-│   ├── utils/
-│   │   └── navigation.js
 │   ├── styles/
 │   │   └── global.css
+│   ├── utils/
+│   │   └── navigation.js
 │   ├── App.svelte
 │   └── main.js
 ├── src-tauri/
@@ -46,120 +105,287 @@ TABLES-TAURI/
 │   ├── Cargo.toml
 │   ├── tauri.conf.json
 │   └── ...
-├── index.html
+├── scripts/
+│   └── ssg-build.js
+├── api/
+│   ├── cms.js
+│   └── deploy.js
+├── static/
+│   ├── assets/
+│   └── cms/
+├── dist/
 ├── package.json
+├── vercel.json
 ├── vite.config.js
 └── svelte.config.js
 ```
 
-## Prerequisites
+## Vercel Deployment
 
-- Node.js 18+ 
-- Rust 1.77.2+
-- npm or yarn
+### One-Click Deploy
 
-## Development
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/iairu/tables-cms)
 
-1. Install dependencies:
-```bash
-npm install
+### Manual Deployment
+
+1. **Build the static site:**
+   ```bash
+   npm run build:ssg
+   ```
+
+2. **Deploy to Vercel:**
+   ```bash
+   npm run deploy:vercel
+   ```
+
+   Or using Vercel CLI:
+   ```bash
+   vercel --prod
+   ```
+
+### Configuration
+
+The `vercel.json` file contains the deployment configuration:
+
+```json
+{
+  "framework": "vite",
+  "buildCommand": "npm run build:ssg",
+  "outputDirectory": "dist",
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" }
+    },
+    {
+      "src": "/cms/(.*)",
+      "headers": { "cache-control": "public, max-age=60, must-revalidate" }
+    }
+  ]
+}
 ```
 
-2. Run the development server:
-```bash
-npm run tauri:dev
+### Environment Variables
+
+Set these in your Vercel project settings:
+
+- `VERCEL_API_KEY` - Your Vercel API key for programmatic deployments
+
+## Usage Guide
+
+### Extensions System
+
+1. Go to **Extensions** in the sidebar
+2. Toggle extensions on/off
+3. Some extensions show warnings (demo only, not for production use)
+
+**Available Extensions:**
+
+| Extension | Category | Production Ready |
+|-----------|----------|------------------|
+| Pages | Core | ✅ Yes |
+| Blog | Core | ✅ Yes |
+| Page Groups | Core | ✅ Yes |
+| Pedigree | Database | ✅ Yes |
+| Rental Management | Business | ✅ Yes |
+| Movie Tracker | Personal | ✅ Yes |
+| Notes | Productivity | ✅ Yes |
+| Personal | Personal | ⚠️ Demo Only |
+| Biometric | Sensitive | ⚠️ Demo Only |
+| Medical | Sensitive | ⚠️ Demo Only |
+| Financial | Sensitive | ⚠️ Demo Only |
+| Legal | Sensitive | ⚠️ Demo Only |
+
+### Pages Extension
+
+1. Navigate to **Pages**
+2. Click **New Page** to create a page
+3. Edit page details (name, slug)
+4. Add components from the dropdown:
+   - **Hero Section** - Large header with CTA
+   - **Text Block** - Rich text content
+   - **Image** - Single image with caption
+   - **Video** - Embedded video
+   - **Features Grid** - Feature cards
+   - **Call to Action** - CTA section
+   - **Blog List** - Recent articles
+   - And more...
+5. Arrange components using drag & drop
+6. Save and build
+
+### Blog Extension
+
+1. Navigate to **Blog**
+2. Click **New Article**
+3. Fill in article details:
+   - Title, slug, excerpt
+   - Featured image
+   - Author, category, tags
+4. Use the rich text editor for content
+5. Add translations for multilingual support
+6. Publish when ready
+
+### Page Groups Extension
+
+1. Navigate to **Page Groups**
+2. Create a new group
+3. Configure display settings:
+   - Show in Main Menu
+   - Show Dropdown Menu
+   - Show in Sitemap
+4. Add pages to the group
+5. Arrange page order
+6. Preview dropdown menu
+
+### Theme System
+
+1. Go to **Settings** → **Theme**
+2. Choose from 10 built-in themes:
+   - **Default** - Clean modern blue
+   - **Synthwave** - Retro futuristic
+   - **Matrix** - Classic green on black
+   - **Monokai** - Popular dark code theme
+   - **GitHub** - Familiar GitHub style
+   - **VS Code** - Dark editor theme
+   - **Anime** - Vibrant pink kawaii
+   - **Historic Paper** - Vintage parchment
+   - **Senior Citizen** - High contrast
+   - **Ayu** - Warm dark theme
+3. Theme changes apply immediately
+
+## API Routes
+
+### `/api/cms`
+
+Fetch CMS data for the deployed site.
+
+```javascript
+GET /api/cms
+// Returns: { pages, blogArticles, settings, ... }
 ```
 
-This will start both the Vite dev server and the Tauri application.
+### `/api/deploy`
 
-## Building
+Trigger a new deployment.
 
-### Development Build
-```bash
-npm run tauri:dev
+```javascript
+POST /api/deploy
+// Body: { apiKey: 'your-api-key' }
+// Returns: { success: true, deploymentId: '...' }
 ```
 
-### Production Build
+## SSG Build Script
+
+The `scripts/ssg-build.js` generates static HTML files:
+
 ```bash
-npm run tauri:build
+npm run build:ssg
 ```
 
-### Platform-specific Builds
-```bash
-# macOS
-npm run tauri:build -- --target x86_64-apple-darwin
-npm run tauri:build -- --target aarch64-apple-darwin
+This creates:
+- `dist/index.html` - Home page
+- `dist/pages/*.html` - Individual pages
+- `dist/blog/*.html` - Blog articles
+- `dist/assets/css/main.css` - Generated styles
+- `dist/assets/js/main.js` - Runtime JavaScript
+- `dist/cms/*.json` - CMS data files
 
-# Windows
-npm run tauri:build -- --target x86_64-pc-windows-msvc
-```
+## Collaboration Features (Coming Soon)
 
-## CMS Sections
+Real-time collaboration allows multiple users to edit content simultaneously:
 
-- **Pages** - Manage website pages with component-based structure
-- **Page Groups** - Organize pages into hierarchical groups
-- **Blog** - Create and manage blog articles
-- **Pedigree** - Track cat pedigrees and breeding records
-- **Personal** - Personal notes and data
-- **Rental Management**
-  - Inventory - Track rental items
-  - Attendance - Record attendance
-  - Customers - Customer database
-  - Employees - Employee management
-  - Reservations - Booking system
-  - Calendar - Visual calendar view
-- **Settings** - Site configuration and branding
-- **Extensions** - Enable/disable features
-- **Uploads** - File and asset management
-- **Movie Tracker** - Personal movie tracking
+1. Enable **Collaboration** in Settings
+2. Start or connect to a collaboration server
+3. See who else is editing
+4. Field-level locking prevents conflicts
 
-## Collaboration
+**GDPR Notice:** When collaboration is enabled, your IP, location, and collaboration token are stored on the server.
 
-The CMS supports real-time collaboration:
+## Comparison: Old vs New
 
-1. **Host Mode** - Start a server to host a collaborative session
-2. **Client Mode** - Connect to a host for synchronized editing
-3. **Field Locking** - Prevent edit conflicts with automatic locking
-4. **Auto-discovery** - Find servers on the local network
-
-## Data Storage
-
-- CMS data is stored in `static/cms/*.json` files
-- User uploads are stored in the Tauri app data directory
-- Settings are persisted in localStorage
-- Collaboration state is managed via Socket.io
-
-## Migration from Electron/Gatsby
-
-This Tauri + Svelte version replaces the original Electron + Gatsby + React CMS:
-
-| Feature | Old (Electron) | New (Tauri) |
-|---------|---------------|-------------|
+| Feature | Electron + React | Tauri + Svelte |
+|---------|-----------------|----------------|
 | Bundle Size | ~150MB | ~15MB |
 | Memory Usage | ~500MB | ~100MB |
 | Startup Time | ~5s | ~1s |
 | Framework | React | Svelte |
 | Backend | Node.js | Rust |
+| Deployment | Complex | Vercel-ready |
 
-## API Commands
+## Troubleshooting
 
-The Tauri backend provides these commands:
+### Build Issues
 
-- `save_attachment` - Save file attachments
-- `get_attachment` - Retrieve attachments
-- `delete_attachment` - Remove attachments
-- `upload_file` - Upload new files
-- `get_uploads` - List all uploads
-- `delete_upload` - Delete uploaded files
+```bash
+# Clear cache and reinstall
+rm -rf node_modules dist
+npm install
+npm run build:ssg
+```
+
+### Tauri Issues
+
+```bash
+# Check Rust installation
+rustc --version
+
+# Update Tauri CLI
+npm install -g @tauri-apps/cli
+```
+
+### Vercel Deployment Issues
+
+```bash
+# Check vercel.json syntax
+cat vercel.json | jq .
+
+# View deployment logs
+vercel logs
+```
+
+## Development
+
+### Adding New Extensions
+
+1. Create extension component in `src/components/cms/sections/`
+2. Add to `ExtensionsSection.svelte`
+3. Update `App.svelte` routing
+4. Add menu item to `SideMenu.svelte`
+
+### Adding New Themes
+
+1. Add theme variables to `src/styles/global.css`
+2. Add theme to `SettingsSection.svelte` themes array
+3. Test theme switching
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests
+5. Submit a pull request
 
 ## License
 
-MIT
+MIT License - see [LICENSE](../LICENSE) for details.
 
 ## Credits
 
 Built with:
 - [Tauri](https://tauri.app/) - Native app framework
 - [Svelte](https://svelte.dev/) - Reactive UI framework
+- [Vite](https://vitejs.dev/) - Build tool
 - [Socket.io](https://socket.io/) - Real-time communication
 - [FontAwesome](https://fontawesome.com/) - Icons
+- [Vercel](https://vercel.com/) - Deployment platform
+
+## Support
+
+- **Documentation:** This README
+- **Issues:** [GitHub Issues](https://github.com/iairu/tables-cms/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/iairu/tables-cms/discussions)
+
+---
+
+Made with ❤️ by the TABLES Team

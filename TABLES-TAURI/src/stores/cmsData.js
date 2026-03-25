@@ -52,7 +52,10 @@ async function loadJSON(path, defaultValue = null) {
   try {
     const response = await fetch(path);
     if (!response.ok) return defaultValue;
-    return await response.json();
+    const text = await response.text();
+    // Handle empty or invalid JSON
+    if (!text.trim()) return defaultValue;
+    return JSON.parse(text);
   } catch (e) {
     console.warn('Failed to load JSON:', path, e);
     return defaultValue;
@@ -84,9 +87,9 @@ function loadFromStorage(key, defaultValue = null) {
 // Load initial CMS data
 export async function loadCMSData() {
   if (!isBrowser) return;
-  
+
   const t = Date.now();
-  
+
   try {
     const [
       pages, pageGroups, blogArticles,
@@ -111,13 +114,29 @@ export async function loadCMSData() {
       loadJSON(`/cms/acl.json?t=${t}`, {}),
       loadJSON(`/cms/extensions.json?t=${t}`, null)
     ]);
-    
+
+    console.log('Loaded CMS data:', {
+      pagesCount: pages?.length,
+      pageGroupsCount: pageGroups?.length,
+      blogArticlesCount: blogArticles?.length
+    });
+
+    // Transform pages from old format (title, rows) to new format (name, components)
+    const transformedPages = (pages || []).map(page => ({
+      id: page.id || Date.now().toString(),
+      name: page.title || page.name || 'Untitled',
+      slug: page.slug || 'untitled',
+      components: page.rows || page.components || [],
+      createdAt: page.lastEdited || page.createdAt || Date.now(),
+      updatedAt: page.lastEdited || page.updatedAt || Date.now()
+    }));
+
     // Fallback extensions from localStorage
     const extData = extensions || loadFromStorage('extensions', {});
     
     cmsData.update(data => ({
       ...data,
-      pages: pages || [],
+      pages: transformedPages || [],
       pageGroups: pageGroups || [],
       blogArticles: blogArticles || [],
       catRows: catRows || [],
