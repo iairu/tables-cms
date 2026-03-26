@@ -790,7 +790,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="save-indicator">
               {#if lastSaved}
                 <span class="save-status saved">
@@ -810,9 +810,6 @@
             </div>
             <button class="btn-secondary" on:click={openPreview} title="Preview Page">
               <i class="fas fa-eye"></i> Preview
-            </button>
-            <button class="btn-success" on:click={handleSavePage} disabled={isSaving}>
-              <i class="fas fa-save"></i> Save
             </button>
           </div>
           

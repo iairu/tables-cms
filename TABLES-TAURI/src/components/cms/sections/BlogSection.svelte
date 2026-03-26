@@ -353,9 +353,6 @@
                   <i class="fas fa-check"></i> Publish
                 </button>
               {/if}
-              <button class="btn-primary" on:click={handleSaveArticle} disabled={isSaving}>
-                <i class="fas fa-save"></i> Save
-              </button>
             </div>
           </div>
           

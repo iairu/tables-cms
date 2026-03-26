@@ -52,14 +52,14 @@
         Build Locally
       </button>
 
-      {#if domain && vercelApiKey}
+      {#if vercelApiKey}
         <button
           class="btn-success"
           on:click={() => onBuildAndDeploy()}
-          title="Build & Deploy"
+          title="Build & Deploy to Vercel"
         >
           <i class="fas fa-rocket"></i>
-          Build & Deploy
+          Deploy
         </button>
       {/if}
     {:else if isBuilding}
@@ -92,11 +92,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
+    padding: 8px 16px;
     background: var(--bg-card, white);
     border-bottom: 1px solid var(--border-light, #e2e8f0);
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     z-index: 1000;
+    height: 55px;
   }
 
   .header-left {
@@ -105,13 +106,13 @@
   }
 
   .app-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--text-primary, #0f172a);
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
   .app-title i {
@@ -146,16 +147,16 @@
   .btn-success,
   .btn-secondary,
   .btn-disabled {
-    padding: 8px 16px;
+    padding: 6px 12px;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--text-sm);
     display: flex;
     align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
+    gap: 6px;
+    transition: all var(--transition-fast);
     text-decoration: none;
   }
 

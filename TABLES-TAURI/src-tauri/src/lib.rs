@@ -418,10 +418,19 @@ pub fn run() {
                     &clear_recent,
                 ])?;
 
-                // View menu with reload
+                // View menu with zoom and reload
+                let zoom_in = MenuItem::with_id(app, "zoom_in", "Zoom In", true, Some("CmdOrCtrl+Plus"))?;
+                let zoom_out = MenuItem::with_id(app, "zoom_out", "Zoom Out", true, Some("CmdOrCtrl+-"))?;
+                let zoom_reset = MenuItem::with_id(app, "zoom_reset", "Actual Size", true, Some("CmdOrCtrl+0"))?;
+                let zoom_separator = PredefinedMenuItem::separator(app)?;
                 let reload = MenuItem::with_id(app, "reload", "Reload", true, Some("CmdOrCtrl+R"))?;
                 let force_reload = MenuItem::with_id(app, "force_reload", "Force Reload", true, Some("Cmd+Shift+R"))?;
+                
                 let view_menu = Submenu::with_items(app, "View", true, &[
+                    &zoom_in,
+                    &zoom_out,
+                    &zoom_reset,
+                    &zoom_separator,
                     &reload,
                     &force_reload,
                 ])?;
@@ -449,6 +458,21 @@ pub fn run() {
                     let mut recent = RECENT_PROJECTS.lock().unwrap();
                     recent.clear();
                     let _ = app.emit("recent-projects-updated", Vec::<String>::new());
+                }
+                "zoom_in" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.eval("document.body.style.zoom = (parseFloat(getComputedStyle(document.body).zoom || 1) + 0.1).toString()");
+                    }
+                }
+                "zoom_out" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.eval("document.body.style.zoom = Math.max(0.5, parseFloat(getComputedStyle(document.body).zoom || 1) - 0.1).toString()");
+                    }
+                }
+                "zoom_reset" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.eval("document.body.style.zoom = 1");
+                    }
                 }
                 "reload" => {
                     if let Some(window) = app.get_webview_window("main") {

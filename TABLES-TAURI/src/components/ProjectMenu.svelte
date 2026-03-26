@@ -109,11 +109,14 @@
   .project-menu {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 8px 16px;
+    gap: 12px;
+    padding: 6px 16px;
     background: var(--bg-secondary, #f8fafc);
     border-bottom: 1px solid var(--border-light, #e2e8f0);
-    margin-top: 65px;
+    margin-top: 55px;
+    position: relative;
+    z-index: 110;
+    height: 45px;
   }
 
   .project-info {
@@ -125,15 +128,15 @@
   .project-name {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 14px;
+    gap: 6px;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--text-primary, #0f172a);
-    padding: 6px 12px;
+    padding: 4px 10px;
     background: var(--bg-card, white);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border-light, #e2e8f0);
-    max-width: 300px;
+    max-width: 250px;
     overflow: hidden;
   }
   

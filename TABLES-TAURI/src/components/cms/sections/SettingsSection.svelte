@@ -475,76 +475,73 @@
 
 <style>
   .settings-section {
-    padding: 20px;
     height: calc(100vh - 140px);
     overflow: hidden;
   }
   
   .settings-layout {
     display: flex;
-    gap: 24px;
     height: 100%;
     overflow: hidden;
   }
   
   .settings-tabs {
-    width: 240px;
+    width: 260px;
     background: var(--bg-card, white);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    padding: 16px;
+    border-right: 1px solid var(--border-light, #e2e8f0);
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    overflow-y: auto;
+    height: 100%;
+    overflow: hidden;
   }
-  
+
   .tab {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 16px;
+    padding: 12px 20px;
     border: none;
     background: transparent;
-    border-radius: 8px;
     cursor: pointer;
     text-align: left;
     font-size: 14px;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #475569);
     transition: all 0.2s;
+    border-left: 3px solid transparent;
   }
-  
+
   .tab:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
+    background: var(--bg-secondary, #f8fafc);
+    color: var(--color-primary, #2563eb);
   }
-  
+
   .tab.active {
-    background: var(--color-primary);
-    color: white;
+    background: var(--bg-tertiary, #eff6ff);
+    color: var(--color-primary, #2563eb);
+    border-left-color: var(--color-primary, #2563eb);
   }
-  
+
   .tab i {
     width: 20px;
     text-align: center;
+    flex-shrink: 0;
   }
   
   .settings-content {
     flex: 1;
-    background: var(--bg-card, white);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    padding: 32px;
+    background: var(--bg-primary, #f8fafc);
+    padding: 20px;
     overflow-y: auto;
   }
-  
+
   .tab-content h2 {
-    font-size: 24px;
-    margin-bottom: 24px;
+    font-size: 20px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
   
   .tab-content h2 i {
@@ -552,23 +549,23 @@
   }
   
   .settings-group {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--border-light);
   }
-  
+
   .settings-group:last-child {
     border-bottom: none;
   }
-  
+
   .settings-group h3 {
-    font-size: 18px;
-    margin-bottom: 16px;
+    font-size: 16px;
+    margin-bottom: 12px;
     color: var(--text-primary);
   }
-  
+
   .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
   
   .form-group label {

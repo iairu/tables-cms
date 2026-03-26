@@ -9,6 +9,7 @@ perfect, now add the ability to do full reload with keybind cmd+shift+r and a re
 do not show notes button in header if notes extension is not enabled, also make sure that the header position is fixed
 
 completely remove div.window-controls 
+
 ---
 
 perfect, confirmation for uploads delete button shows up but the upload gets deleted before its confirmed, same for delete button in pages and other places, make sure to always wait for user confirmation of any delete
@@ -84,4 +85,20 @@ add preview button to edit page, make sure it properly previews the page in an i
 filename on saving has .json.json.cms should only be .json.cms
 
 opening a project does not show the filename in project menu bar, saving a project does
+
+---
+
+remove save button from page as it autosaves, same for blog
+
+notes header overlays "open project" and "save project" buttons, fix
+
+some elements like blockquote have incorrect (white) background in dark themes, active buttons should have black text in dark themes
+
+make the settings sidebar styled just like sidemenu
+
+make the whole app more compact: reduce all padding
+
+add zoom keybinds to tauri
+
+readd deploy button back to header as it is missing with a present vercel api key, show it only if vercel key is present
 

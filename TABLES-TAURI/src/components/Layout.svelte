@@ -276,7 +276,7 @@
 
   .content-area {
     flex-grow: 1;
-    padding: 20px;
+    padding: 12px;
     overflow-y: auto;  /* Only content area scrolls */
     height: 100%;  /* Fill available height */
   }
