@@ -56,56 +56,52 @@
         <i class="fas fa-times"></i>
       </button>
     {:else}
-      <div class="no-project">
+      <div class="project-name untitled">
         <i class="fas fa-folder"></i>
-        <span>No project open</span>
+        <span>Untitled Project</span>
       </div>
     {/if}
   </div>
-  
+
   <div class="project-actions">
-    {#if isProjectOpenValue}
-      <button class="btn-secondary btn-sm" on:click={handleSaveProject} title="Save Project (Cmd+S)">
-        <i class="fas fa-save"></i>
-        <span>Save</span>
-      </button>
-    {/if}
-    
-    <div class="dropdown" class:open={showRecentMenu}>
-      <button 
-        class="btn-primary btn-sm" 
-        on:click={() => showRecentMenu = !showRecentMenu}
-        title="Open Project (Cmd+O)"
-      >
-        <i class="fas fa-folder-open"></i>
-        <span>{isProjectOpenValue ? 'Open Another' : 'Open Project'}</span>
-      </button>
-      
-      <div class="dropdown-content">
-        <button class="dropdown-item" on:click={handleOpenProject}>
-          <i class="fas fa-folder-plus"></i>
-          <span>Open Project…</span>
+    <button class="btn-secondary btn-sm" on:click={handleSaveProject} title="Save Project (Cmd+S)">
+      <i class="fas fa-save"></i>
+      <span>Save Project</span>
+    </button>
+
+    <button class="btn-primary btn-sm" on:click={handleOpenProject} title="Open Project (Cmd+O)">
+      <i class="fas fa-folder-open"></i>
+      <span>{isProjectOpenValue ? 'Open Another' : 'Open Project'}</span>
+    </button>
+
+    {#if recentProjectsValue && recentProjectsValue.length > 0}
+      <div class="dropdown" class:open={showRecentMenu}>
+        <button
+          class="btn-icon btn-sm"
+          on:click={() => showRecentMenu = !showRecentMenu}
+          title="Recent Projects"
+        >
+          <i class="fas fa-chevron-down"></i>
         </button>
-        
-        {#if recentProjectsValue && recentProjectsValue.length > 0}
-          <div class="dropdown-separator"></div>
+
+        <div class="dropdown-content">
           <div class="dropdown-header">Recent Projects</div>
-          
+
           {#each recentProjectsValue as path}
             <button class="dropdown-item recent" on:click={() => handleOpenRecent(path)}>
               <i class="fas fa-history"></i>
               <span class="recent-path" title={path}>{formatPath(path)}</span>
             </button>
           {/each}
-          
+
           <div class="dropdown-separator"></div>
           <button class="dropdown-item" on:click={() => { clearRecentProjects(); showRecentMenu = false; }}>
             <i class="fas fa-trash"></i>
             <span>Clear Recent</span>
           </button>
-        {/if}
+        </div>
       </div>
-    </div>
+    {/if}
   </div>
 </div>
 
@@ -117,14 +113,15 @@
     padding: 8px 16px;
     background: var(--bg-secondary, #f8fafc);
     border-bottom: 1px solid var(--border-light, #e2e8f0);
+    margin-top: 65px;
   }
-  
+
   .project-info {
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  
+
   .project-name {
     display: flex;
     align-items: center;
@@ -133,7 +130,7 @@
     font-weight: 600;
     color: var(--text-primary, #0f172a);
     padding: 6px 12px;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 6px;
     border: 1px solid var(--border-light, #e2e8f0);
     max-width: 300px;
@@ -149,16 +146,17 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  
-  .no-project {
+
+  .project-name.untitled {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 14px;
     color: var(--text-tertiary, #94a3b8);
+    padding: 6px 12px;
   }
-  
-  .no-project i {
+
+  .project-name.untitled i {
     font-size: 16px;
   }
   
@@ -178,7 +176,7 @@
     position: absolute;
     top: 100%;
     right: 0;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     min-width: 280px;
@@ -264,7 +262,7 @@
   }
   
   .btn-secondary {
-    background: white;
+    background: var(--bg-card, white);
     color: var(--text-secondary, #475569);
     border: 1px solid var(--border-light, #e2e8f0);
   }
@@ -289,12 +287,18 @@
     justify-content: center;
     transition: all 0.2s;
   }
-  
+
   .btn-icon.btn-xs {
     width: 24px;
     height: 24px;
   }
-  
+
+  .btn-icon.btn-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
+
   .btn-icon:hover {
     background: var(--bg-tertiary, #f1f5f9);
   }

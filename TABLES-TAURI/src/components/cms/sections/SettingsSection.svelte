@@ -3,7 +3,7 @@
   
   let cmsDataValue;
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
-  
+
   // Local settings state with defaults
   let localSettings = {
     siteName: '',
@@ -27,12 +27,14 @@
     showComponentIds: false
   };
 
-  // Initialize local settings from CMS data
-  $: if (cmsDataValue?.settings) {
+  // Initialize local settings from CMS data (only once on first load)
+  let initialized = false;
+  $: if (cmsDataValue?.settings && !initialized) {
     localSettings = {
       ...localSettings,
       ...cmsDataValue.settings
     };
+    initialized = true;
   }
   
   // Available themes
@@ -487,7 +489,7 @@
   
   .settings-tabs {
     width: 240px;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     padding: 16px;
@@ -530,7 +532,7 @@
   
   .settings-content {
     flex: 1;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     padding: 32px;
@@ -797,7 +799,7 @@
   }
   
   .btn-secondary {
-    background: white;
+    background: var(--bg-card, white);
     color: var(--text-secondary);
     border: 1px solid var(--border-light);
   }

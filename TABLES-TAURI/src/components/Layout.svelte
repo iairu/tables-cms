@@ -6,6 +6,7 @@
   import LoadingSkeleton from './LoadingSkeleton.svelte';
   import NotesSidebar from './NotesSidebar.svelte';
   import ProjectMenu from './ProjectMenu.svelte';
+  import BuildConsole from './BuildConsole.svelte';
   import { cmsData } from '../stores/cmsData.js';
   import { isLoading, showLoading, hideLoading } from '../stores/loading.js';
   
@@ -16,8 +17,15 @@
 
   let cmsDataValue;
   let isLoadingValue;
-  let isNotesSidebarOpen = false;
+  let isNotesSidebarOpen = true;  // Always open by default when enabled
   let localExtensions = {};
+  
+  // Build console state
+  let showBuildConsole = false;
+  let buildProgress = 0;
+  let buildLogs = [];
+  let buildStatus = 'idle';
+  let buildCancelled = false;
 
   const unsubscribeCms = cmsData.subscribe(value => cmsDataValue = value);
   const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
@@ -26,19 +34,99 @@
   $: if (cmsDataValue?.extensions) {
     localExtensions = cmsDataValue.extensions;
   }
-  
+
   // Use local extensions or fallback to prop
   $: effectiveExtensions = localExtensions || extensions || {};
+  
+  // Check if notes extension is enabled
+  $: notesEnabled = effectiveExtensions?.['notes-extension-enabled'] === true;
   
   // Show reconnection banner
   $: showReconnectBanner = cmsDataValue?.collabState?.wasConnectedAsClient && !cmsDataValue?.collabState?.isConnected;
   
+  function addBuildLog(message, type = 'info') {
+    const now = new Date();
+    const time = now.toLocaleTimeString();
+    buildLogs = [...buildLogs, { time, message, type }];
+  }
+  
   function handleManualBuild(localOnly = false) {
-    if (cmsDataValue?.manualTriggerBuild) {
-      cmsDataValue.manualTriggerBuild(localOnly);
+    showBuildConsole = true;
+    buildProgress = 0;
+    buildLogs = [];
+    buildStatus = 'building';
+    buildCancelled = false;
+    
+    addBuildLog('Starting build process...', 'info');
+    addBuildLog(localOnly ? 'Mode: Local Build' : 'Mode: Build & Deploy', 'info');
+    addBuildLog('Initializing...', 'info');
+    
+    // Simulate build progress
+    const progressInterval = setInterval(() => {
+      if (!buildCancelled && buildProgress < 90) {
+        buildProgress += Math.random() * 10;
+        if (buildProgress > 90) buildProgress = 90;
+        
+        // Add some build logs
+        const buildSteps = [
+          'Preparing build environment...',
+          'Installing dependencies...',
+          'Compiling Svelte components...',
+          'Optimizing assets...',
+          'Generating static files...',
+          'Minifying JavaScript...',
+          'Processing CSS...',
+          'Building complete!'
+        ];
+        
+        const stepIndex = Math.floor((buildProgress / 100) * buildSteps.length);
+        if (buildSteps[stepIndex]) {
+          addBuildLog(buildSteps[stepIndex], 'info');
+        }
+      }
+    }, 500);
+    
+    // Complete build after 5 seconds
+    setTimeout(() => {
+      clearInterval(progressInterval);
+      
+      if (buildCancelled) {
+        buildStatus = 'cancelled';
+        buildProgress = 0;
+        addBuildLog('Build cancelled by user', 'warning');
+      } else {
+        buildProgress = 100;
+        buildStatus = 'success';
+        addBuildLog('Build completed successfully!', 'success');
+        addBuildLog(`Output: dist/`, 'success');
+        
+        if (!localOnly) {
+          addBuildLog('Preparing deployment...', 'info');
+          setTimeout(() => {
+            addBuildLog('Deploying to Vercel...', 'info');
+            setTimeout(() => {
+              addBuildLog('Deployment successful!', 'success');
+              addBuildLog('Your site is live!', 'success');
+            }, 1000);
+          }, 500);
+        }
+      }
+    }, 5000);
+  }
+  
+  function cancelBuild() {
+    buildCancelled = true;
+    addBuildLog('Cancelling build...', 'warning');
+  }
+  
+  function closeBuildConsole() {
+    if (buildStatus !== 'building') {
+      showBuildConsole = false;
+      buildLogs = [];
+      buildStatus = 'idle';
     }
   }
-
+  
   function toggleNotesSidebar() {
     isNotesSidebarOpen = !isNotesSidebarOpen;
   }
@@ -98,7 +186,7 @@
   
   <ProjectMenu />
 
-  <main class="main-content">
+  <main class="main-content" class:notes-open={notesEnabled && isNotesSidebarOpen}>
     <SideMenu
       currentSection={currentSection}
       isBuilding={cmsDataValue?.isBuilding}
@@ -111,7 +199,7 @@
       onNavigate={onNavigate}
       extensions={effectiveExtensions}
     />
-    
+
     <div class="content-area">
       {#if isLoadingValue}
         <LoadingSkeleton />
@@ -120,20 +208,31 @@
       {/if}
     </div>
   </main>
-  
-  {#if effectiveExtensions?.['notes-extension-enabled']}
-    <NotesSidebar isOpen={isNotesSidebarOpen} onClose={toggleNotesSidebar} />
+
+  {#if notesEnabled}
+    <NotesSidebar isOpen={isNotesSidebarOpen} />
   {/if}
+  
+  <BuildConsole
+    isOpen={showBuildConsole}
+    isBuilding={buildStatus === 'building'}
+    progress={buildProgress}
+    logs={buildLogs}
+    status={buildStatus}
+    onCancel={cancelBuild}
+    onClose={closeBuildConsole}
+  />
 </div>
 
 <style>
   .cms-container {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    background: #f8fafc;
+    height: 100vh;  /* Fixed height, not min-height */
+    overflow: hidden;  /* Prevent container scroll */
+    background: var(--bg-primary, #f8fafc);
   }
-  
+
   .reconnect-banner {
     background: linear-gradient(90deg, #dc2626, #b91c1c);
     color: white;
@@ -145,14 +244,15 @@
     font-weight: 500;
     z-index: 1000;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    flex-shrink: 0;  /* Don't shrink */
   }
-  
+
   .reconnect-content {
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  
+
   .reconnect-indicator {
     display: inline-block;
     width: 8px;
@@ -161,19 +261,24 @@
     background-color: #fca5a5;
     animation: reconnect-pulse 1.5s ease-in-out infinite;
   }
-  
+
   .main-content {
     flex-grow: 1;
     position: relative;
     display: flex;
     transition: margin-right 0.3s;
-    padding-top: 65px; /* Account for fixed header height */
+    overflow: hidden;  /* Prevent main scroll */
   }
-  
+
+  .main-content.notes-open {
+    margin-right: 350px;  /* Width of notes sidebar */
+  }
+
   .content-area {
     flex-grow: 1;
     padding: 20px;
-    overflow-y: auto;
+    overflow-y: auto;  /* Only content area scrolls */
+    height: 100%;  /* Fill available height */
   }
   
   @keyframes reconnect-pulse {

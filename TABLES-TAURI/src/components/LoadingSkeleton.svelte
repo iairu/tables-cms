@@ -93,7 +93,7 @@
   }
 
   .skeleton-card {
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -150,7 +150,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    background: white;
+    background: var(--bg-card, white);
     padding: 16px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -171,7 +171,7 @@
   }
 
   .skeleton-table {
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -191,7 +191,7 @@
 
   .skeleton-cell {
     height: 48px;
-    background: white;
+    background: var(--bg-card, white);
     padding: 12px 16px;
   }
 
@@ -212,7 +212,7 @@
   }
 
   .skeleton-form {
-    background: white;
+    background: var(--bg-card, white);
     padding: 24px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -255,7 +255,7 @@
   }
 
   .skeleton-article {
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);

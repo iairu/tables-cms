@@ -35,29 +35,22 @@
     const sections = {
       'settings': true,
       'extensions': true,
-      'uploads': true,
-      // Default sections always available
-      'pages': true,
-      'page-groups': true,
-      'blog': true,
-      'cats': true  // Pedigree always available by default
+      'uploads': true
     };
 
-    // Core sections (only hide if explicitly disabled)
-    if (ext['pages-extension-enabled'] === false) sections['pages'] = false;
-    if (ext['page-groups-extension-enabled'] === false) sections['page-groups'] = false;
-    if (ext['blog-extension-enabled'] === false) sections['blog'] = false;
-
-    // Database extensions (require explicit enable)
-    if (ext['pedigree-extension-enabled']) sections['cats'] = true;
-    if (ext['personal-extension-enabled']) sections['personal'] = true;
-    if (ext['biometric-extension-enabled']) sections['biometric'] = true;
-    if (ext['medical-extension-enabled']) sections['medical'] = true;
-    if (ext['financial-extension-enabled']) sections['financial'] = true;
-    if (ext['legal-extension-enabled']) sections['legal'] = true;
+    // All sections require explicit extension enable
+    if (ext['pages-extension-enabled'] === true) sections['pages'] = true;
+    if (ext['page-groups-extension-enabled'] === true) sections['page-groups'] = true;
+    if (ext['blog-extension-enabled'] === true) sections['blog'] = true;
+    if (ext['pedigree-extension-enabled'] === true) sections['cats'] = true;
+    if (ext['personal-extension-enabled'] === true) sections['personal'] = true;
+    if (ext['biometric-extension-enabled'] === true) sections['biometric'] = true;
+    if (ext['medical-extension-enabled'] === true) sections['medical'] = true;
+    if (ext['financial-extension-enabled'] === true) sections['financial'] = true;
+    if (ext['legal-extension-enabled'] === true) sections['legal'] = true;
 
     // Rental extension
-    if (ext['rental-extension-enabled']) {
+    if (ext['rental-extension-enabled'] === true) {
       sections['rental-inventory'] = true;
       sections['rental-attendance'] = true;
       sections['rental-customers'] = true;
@@ -67,7 +60,7 @@
     }
 
     // Other extensions
-    if (ext['movie-tracker-enabled']) sections['movietracker'] = true;
+    if (ext['movie-tracker-enabled'] === true) sections['movietracker'] = true;
 
     return sections;
   }
@@ -75,10 +68,10 @@
   function getCurrentSection(path) {
     const sections = getAvailableSections();
 
-    if (path.startsWith('/cms/pages')) return 'pages';
-    if (path.startsWith('/cms/page-groups')) return 'page-groups';
-    if (path.startsWith('/cms/blog')) return 'blog';
-    if (path.startsWith('/cms/pedigree')) return 'cats';
+    if (path.startsWith('/cms/pages')) return sections['pages'] ? 'pages' : 'settings';
+    if (path.startsWith('/cms/page-groups')) return sections['page-groups'] ? 'page-groups' : 'settings';
+    if (path.startsWith('/cms/blog')) return sections['blog'] ? 'blog' : 'settings';
+    if (path.startsWith('/cms/pedigree')) return sections['cats'] ? 'cats' : 'settings';
     if (path.startsWith('/cms/personal')) return sections['personal'] ? 'personal' : 'settings';
     if (path.startsWith('/cms/inventory')) return sections['rental-inventory'] ? 'rental-inventory' : 'settings';
     if (path.startsWith('/cms/attendance')) return sections['rental-attendance'] ? 'rental-attendance' : 'settings';

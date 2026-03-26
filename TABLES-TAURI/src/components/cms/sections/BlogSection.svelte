@@ -7,7 +7,6 @@
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
   
   let searchQuery = '';
-  let selectedArticle = null;
   let isEditingArticle = false;
   let editingArticle = null;
   let showAssetManager = false;
@@ -81,8 +80,11 @@
       tags: [],
       category: ''
     };
-    
+
     saveBlogArticles([...(cmsDataValue.blogArticles || []), newArticle]);
+    editingArticle = { ...newArticle };
+    isEditingArticle = true;
+    selectedArticle = null;
   }
 
   function requestDeleteArticle(articleId) {
@@ -94,8 +96,9 @@
     showDeleteConfirm = false;
     if (deleteArticleId) {
       saveBlogArticles((cmsDataValue.blogArticles || []).filter(a => a.id !== deleteArticleId));
-      if (selectedArticle?.id === deleteArticleId) {
-        selectedArticle = null;
+      if (editingArticle?.id === deleteArticleId) {
+        editingArticle = null;
+        isEditingArticle = false;
       }
       deleteArticleId = null;
     }
@@ -105,25 +108,16 @@
     showDeleteConfirm = false;
     deleteArticleId = null;
   }
-  
+
   function handleSelectArticle(article) {
-    selectedArticle = article;
-    isEditingArticle = false;
+    // Directly go to edit mode when clicking an article
+    editingArticle = { ...article, translations: { ...article.translations } };
+    isEditingArticle = true;
   }
-  
-  function handleEditArticle() {
-    if (selectedArticle) {
-      editingArticle = { 
-        ...selectedArticle,
-        translations: { ...selectedArticle.translations }
-      };
-      isEditingArticle = true;
-    }
-  }
-  
+
   function handleSaveArticle() {
     if (!editingArticle) return;
-    
+
     isSaving = true;
     saveError = null;
 
@@ -133,9 +127,8 @@
       );
 
       saveBlogArticles(articles);
-      selectedArticle = { ...editingArticle };
-      isEditingArticle = false;
       editingArticle = null;
+      isEditingArticle = false;
       lastSaved = new Date();
       
       // Clear saved indicator after 3 seconds
@@ -266,7 +259,7 @@
 <div class="blog-section">
   <div class="blog-layout">
     <!-- Articles List -->
-    <div class="articles-list-panel {selectedArticle || isEditingArticle ? 'collapsed' : ''}">
+    <div class="articles-list-panel {isEditingArticle ? 'collapsed' : ''}">
       <div class="panel-header">
         <h2><i class="fas fa-pen-fancy"></i> Blog Articles</h2>
         <button class="btn-primary btn-sm" on:click={handleNewArticle}>
@@ -286,7 +279,7 @@
       <div class="articles-list">
         {#each filteredArticles as article}
           <div
-            class="article-item {selectedArticle?.id === article.id && !isEditingArticle ? 'active' : ''}"
+            class="article-item {editingArticle?.id === article.id ? 'active' : ''}"
             on:click={() => handleSelectArticle(article)}
           >
             <div class="article-item-content">
@@ -318,16 +311,16 @@
     
     <!-- Article Editor -->
     <div class="article-editor-panel">
-      {#if !selectedArticle && !isEditingArticle}
+      {#if !isEditingArticle}
         <div class="no-selection">
           <i class="fas fa-pen-fancy"></i>
           <h3>Select an Article</h3>
-          <p>Choose an article from the list or create a new one</p>
+          <p>Click an article to edit or create a new one</p>
           <button class="btn-primary" on:click={handleNewArticle}>
             <i class="fas fa-plus"></i> Create Article
           </button>
         </div>
-      {:else if isEditingArticle && editingArticle}
+      {:else if editingArticle}
         <div class="editor-container">
           <div class="editor-header">
             <button class="btn-back" on:click={handleCancelEdit}>
@@ -604,60 +597,10 @@
             </div>
           </div>
         </div>
-      {:else if selectedArticle}
-        <div class="article-preview">
-          <div class="preview-header">
-            <div>
-              <h2>{selectedArticle.title || 'Untitled'}</h2>
-              <div class="preview-meta">
-                <span class={getStatusBadgeClass(selectedArticle.status || 'draft')}>
-                  {selectedArticle.status || 'draft'}
-                </span>
-                {#if selectedArticle.author}
-                  <span class="author">By {selectedArticle.author}</span>
-                {/if}
-                <span class="date">
-                  {new Date(selectedArticle.createdAt || Date.now()).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-            <div class="preview-actions">
-              <button class="btn-secondary" on:click={() => selectedArticle = null}>
-                <i class="fas fa-list"></i> All Articles
-              </button>
-              <button class="btn-primary" on:click={handleEditArticle}>
-                <i class="fas fa-edit"></i> Edit Article
-              </button>
-            </div>
-          </div>
-          
-          <div class="preview-content">
-            {#if selectedArticle.image}
-              <img src={selectedArticle.image} alt={selectedArticle.title} class="featured-image" />
-            {/if}
-            
-            {#if selectedArticle.excerpt}
-              <p class="excerpt">{selectedArticle.excerpt}</p>
-            {/if}
-            
-            <div class="article-body" innerHTML={selectedArticle.content || ''}></div>
-            
-            {#if selectedArticle.tags && selectedArticle.tags.length > 0}
-              <div class="tags-section">
-                <h4>Tags</h4>
-                <div class="tags-list">
-                  {#each selectedArticle.tags as tag}
-                    <span class="tag">{tag}</span>
-                  {/each}
-                </div>
-              </div>
-            {/if}
-          </div>
-        </div>
       {/if}
     </div>
   </div>
-  
+
   {#if showAssetManager}
     <AssetManagerModal
       onClose={() => showAssetManager = false}
@@ -691,7 +634,7 @@
   
   .articles-list-panel {
     width: 340px;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     display: flex;
@@ -810,7 +753,7 @@
   
   .article-editor-panel {
     flex: 1;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     overflow: hidden;
@@ -1079,7 +1022,7 @@
     padding: 8px 12px;
     border: none;
     border-bottom: 1px solid #e2e8f0;
-    background: white;
+    background: var(--bg-card, white);
     font-size: 14px;
     cursor: pointer;
   }
@@ -1156,7 +1099,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 8px 10px;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 6px;
     font-size: 13px;
   }
@@ -1252,16 +1195,16 @@
   }
   
   .btn-primary {
-    background: #2563eb;
+    background: var(--color-primary, #2563eb);
     color: white;
   }
-  
+
   .btn-primary:hover {
-    background: #1d4ed8;
+    background: var(--color-primary-dark, #1d4ed8);
   }
-  
+
   .btn-secondary {
-    background: white;
+    background: var(--bg-card, white);
     color: #475569;
     border: 1px solid #e2e8f0;
   }

@@ -103,7 +103,7 @@
     font-size: 14px;
     font-family: inherit;
     transition: all 0.2s;
-    background: white;
+    background: var(--bg-card, white);
   }
   
   .locked-input:focus {
@@ -113,7 +113,7 @@
   }
   
   .locked-input.locked {
-    background: #f1f5f9;
+    background: var(--bg-tertiary, #f1f5f9);
     cursor: not-allowed;
   }
   
@@ -126,7 +126,7 @@
     position: absolute;
     top: -8px;
     right: 8px;
-    background: #fef3c7;
+    background: var(--bg-tertiary, #fef3c7);
     color: #92400e;
     padding: 4px 10px;
     border-radius: 12px;

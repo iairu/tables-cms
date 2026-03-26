@@ -101,7 +101,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     width: 90%;
     max-width: 800px;
@@ -138,7 +138,7 @@
     width: 32px;
     height: 32px;
     border: none;
-    background: #f1f5f9;
+    background: var(--bg-tertiary, #f1f5f9);
     border-radius: 6px;
     cursor: pointer;
     display: flex;
@@ -163,7 +163,7 @@
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
-    background: #f8fafc;
+    background: var(--bg-secondary, #f8fafc);
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     margin-bottom: 20px;
@@ -188,7 +188,7 @@
   }
   
   .asset-card {
-    background: white;
+    background: var(--bg-card, white);
     border: 2px solid #e2e8f0;
     border-radius: 8px;
     overflow: hidden;
@@ -205,7 +205,7 @@
   .asset-preview {
     aspect-ratio: 1;
     overflow: hidden;
-    background: #f8fafc;
+    background: var(--bg-secondary, #f8fafc);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -268,7 +268,7 @@
   .btn-secondary {
     padding: 10px 20px;
     border: 1px solid #e2e8f0;
-    background: white;
+    background: var(--bg-card, white);
     color: #475569;
     border-radius: 6px;
     cursor: pointer;
@@ -277,7 +277,7 @@
   }
   
   .btn-secondary:hover {
-    background: #f8fafc;
+    background: var(--bg-secondary, #f8fafc);
   }
   
   @keyframes fadeIn {

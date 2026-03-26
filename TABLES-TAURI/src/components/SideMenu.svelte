@@ -38,9 +38,9 @@
   // Compute visible menu items based on extensions
   $: safeExtensions = (extensions && typeof extensions === 'object') ? extensions : {};
   $: visibleMenuItems = allMenuItems.filter(item => {
-    if (!item.extension) return true;
+    if (!item.extension) return true;  // No extension required
     if (!safeExtensions || typeof safeExtensions !== 'object') return false;
-    return safeExtensions[item.extension] === true;
+    return safeExtensions[item.extension] === true;  // Must be explicitly enabled
   });
 
   // Group rental items
@@ -155,19 +155,18 @@
 <style>
   .side-menu {
     width: 260px;
-    background: white;
-    border-right: 1px solid #e2e8f0;
+    background: var(--bg-card, white);
+    border-right: 1px solid var(--border-light, #e2e8f0);
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 65px);
-    position: sticky;
-    top: 65px; /* Same as header height */
+    height: 100%;  /* Fill parent height */
+    overflow: hidden;  /* Prevent side menu scroll */
   }
 
   .menu-nav {
     flex: 1;
     padding: 16px 0;
-    overflow-y: auto;
+    overflow-y: auto;  /* Only menu items scroll */
   }
 
   .menu-item {
@@ -182,20 +181,20 @@
     text-align: left;
     font-size: 14px;
     font-weight: 500;
-    color: #475569;
+    color: var(--text-secondary, #475569);
     transition: all 0.2s;
     border-left: 3px solid transparent;
   }
 
   .menu-item:hover {
-    background: #f8fafc;
-    color: #2563eb;
+    background: var(--bg-secondary, #f8fafc);
+    color: var(--color-primary, #2563eb);
   }
 
   .menu-item.active {
-    background: #eff6ff;
-    color: #2563eb;
-    border-left-color: #2563eb;
+    background: var(--bg-tertiary, #eff6ff);
+    color: var(--color-primary, #2563eb);
+    border-left-color: var(--color-primary, #2563eb);
   }
 
   .menu-item i {
@@ -215,7 +214,7 @@
 
   .menu-item.group-header {
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-primary, #0f172a);
   }
 
   .menu-item.group-header .group-arrow {
@@ -229,7 +228,7 @@
   }
 
   .menu-group-children {
-    background: #f8fafc;
+    background: var(--bg-secondary, #f8fafc);
     border-radius: 6px;
     margin: 4px 8px;
     overflow: hidden;
@@ -237,8 +236,8 @@
 
   .menu-footer {
     padding: 16px 20px;
-    border-top: 1px solid #e2e8f0;
-    background: #f8fafc;
+    border-top: 1px solid var(--border-light, #e2e8f0);
+    background: var(--bg-secondary, #f8fafc);
   }
 
   .build-status {
@@ -253,13 +252,13 @@
   }
 
   .build-status.building {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--bg-tertiary, #fef3c7);
+    color: var(--text-primary, #92400e);
   }
 
   .build-status.ready {
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--bg-secondary, #d1fae5);
+    color: var(--text-secondary, #065f46);
   }
 
   .last-saved {
@@ -267,7 +266,7 @@
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    color: #64748b;
+    color: var(--text-tertiary, #64748b);
   }
 
   /* Prevent icon flashing - ensure icons are always rendered */

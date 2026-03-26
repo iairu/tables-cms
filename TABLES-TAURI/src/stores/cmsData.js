@@ -213,83 +213,101 @@ export function saveExtensions(extensions, skipBroadcast = false) {
 }
 
 export function saveCatRows(rows, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, catRows: rows }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('catRows', rows);
+    }
+    return { ...data, catRows: rows };
+  });
   saveToStorage('catRows', rows);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('catRows', rows);
-  }
   scheduleBuild();
 }
 
 export function saveUserRows(rows, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, userRows: rows }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('userRows', rows);
+    }
+    return { ...data, userRows: rows };
+  });
   saveToStorage('userRows', rows);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('userRows', rows);
-  }
   scheduleBuild();
 }
 
 export function saveInventoryRows(rows, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, inventoryRows: rows }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('inventoryRows', rows);
+    }
+    return { ...data, inventoryRows: rows };
+  });
   saveToStorage('inventoryRows', rows);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('inventoryRows', rows);
-  }
   scheduleBuild();
 }
 
 export function saveCustomerRows(rows, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, customerRows: rows }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('customerRows', rows);
+    }
+    return { ...data, customerRows: rows };
+  });
   saveToStorage('customerRows', rows);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('customerRows', rows);
-  }
   scheduleBuild();
 }
 
 export function saveEmployeeRows(rows, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, employeeRows: rows }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('employeeRows', rows);
+    }
+    return { ...data, employeeRows: rows };
+  });
   saveToStorage('employeeRows', rows);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('employeeRows', rows);
-  }
   scheduleBuild();
 }
 
 export function saveAttendanceRows(rows, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, attendanceRows: rows }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('attendanceRows', rows);
+    }
+    return { ...data, attendanceRows: rows };
+  });
   saveToStorage('attendanceRows', rows);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('attendanceRows', rows);
-  }
   scheduleBuild();
 }
 
 export function saveReservationRows(rows, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, reservationRows: rows }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('reservationRows', rows);
+    }
+    return { ...data, reservationRows: rows };
+  });
   saveToStorage('reservationRows', rows);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('reservationRows', rows);
-  }
   scheduleBuild();
 }
 
 export function saveComponentRows(rows, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, componentRows: rows }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('componentRows', rows);
+    }
+    return { ...data, componentRows: rows };
+  });
   saveToStorage('componentRows', rows);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('componentRows', rows);
-  }
   scheduleBuild();
 }
 
 export function saveMovieList(list, skipBroadcast = false) {
-  cmsData.update(data => ({ ...data, movieList: list }));
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('movieList', list);
+    }
+    return { ...data, movieList: list };
+  });
   saveToStorage('movieList', list);
-  if (!skipBroadcast && data.collabState.isConnected) {
-    broadcastDataUpdate('movieList', list);
-  }
 }
 
 // Build scheduling

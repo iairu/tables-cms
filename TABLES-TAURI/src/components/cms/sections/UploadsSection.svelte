@@ -74,17 +74,16 @@
   }
 
   function isPreviewable(mimeType) {
-    return mimeType.startsWith('image/') || 
-           mimeType.startsWith('video/') || 
-           mimeType.startsWith('audio/') || 
+    return mimeType.startsWith('image/') ||
+           mimeType.startsWith('video/') ||
+           mimeType.startsWith('audio/') ||
            mimeType === 'application/pdf';
   }
 
   function getPreviewUrl(upload) {
-    if (upload.data && upload.data.startsWith('data:')) {
+    if (upload.data) {
       return upload.data;
     }
-    // Fallback to path-based URL for Tauri
     return `file://${upload.path}`;
   }
 </script>
@@ -130,9 +129,6 @@
                 <i class="fas fa-eye"></i>
               </button>
             {/if}
-            <a href={upload.path} target="_blank" class="btn-icon" title="Open in Browser">
-              <i class="fas fa-external-link-alt"></i>
-            </a>
             <button class="btn-icon btn-danger" on:click={() => requestDelete(upload.id)} title="Delete">
               <i class="fas fa-trash"></i>
             </button>
@@ -257,7 +253,7 @@
   }
 
   .upload-card {
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -341,7 +337,7 @@
   .empty-state {
     text-align: center;
     padding: 60px 20px;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 8px;
   }
 
@@ -376,11 +372,11 @@
   }
 
   .preview-modal {
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
-    max-width: 90vw;
+    width: 90%;
+    max-width: 900px;
     max-height: 90vh;
-    width: 800px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -392,13 +388,14 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border-light, #e2e8f0);
+    background: var(--bg-secondary, #f8fafc);
   }
 
   .preview-header h3 {
     margin: 0;
     font-size: 18px;
-    color: #0f172a;
+    color: var(--text-primary, #0f172a);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -409,18 +406,19 @@
     width: 32px;
     height: 32px;
     border: none;
-    background: #f1f5f9;
     border-radius: 6px;
+    background: var(--bg-tertiary, #f1f5f9);
+    color: var(--text-secondary, #64748b);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #64748b;
-    flex-shrink: 0;
+    transition: all 0.2s;
   }
 
   .btn-close:hover {
-    background: #e2e8f0;
+    background: #ef4444;
+    color: white;
   }
 
   .preview-content {
@@ -431,7 +429,8 @@
     align-items: center;
     justify-content: center;
     min-height: 400px;
-    background: #f8fafc;
+    max-height: 70vh;
+    background: var(--bg-card, white);
   }
 
   .preview-content img {
@@ -455,12 +454,14 @@
   .preview-content iframe {
     border: none;
     border-radius: 8px;
+    width: 100%;
+    height: 600px;
   }
 
   .preview-footer {
     padding: 16px 20px;
-    border-top: 1px solid #e2e8f0;
-    background: white;
+    border-top: 1px solid var(--border-light, #e2e8f0);
+    background: var(--bg-secondary, #f8fafc);
   }
 
   .preview-meta {
@@ -468,7 +469,7 @@
     display: flex;
     gap: 16px;
     font-size: 13px;
-    color: #64748b;
+    color: var(--text-tertiary, #64748b);
   }
 
   @keyframes fadeIn {

@@ -16,27 +16,34 @@ const PROJECT_EXTENSION = '.json.cms';
 // Get all CMS data for export
 function getExportData() {
   return new Promise((resolve) => {
+    let resolved = false;
     const unsubscribe = cmsData.subscribe(data => {
-      resolve({
-        pages: data.pages || [],
-        pageGroups: data.pageGroups || [],
-        blogArticles: data.blogArticles || [],
-        catRows: data.catRows || [],
-        userRows: data.userRows || [],
-        inventoryRows: data.inventoryRows || [],
-        customerRows: data.customerRows || [],
-        employeeRows: data.employeeRows || [],
-        attendanceRows: data.attendanceRows || [],
-        reservationRows: data.reservationRows || [],
-        componentRows: data.componentRows || [],
-        movieList: data.movieList || [],
-        settings: data.settings || {},
-        acl: data.acl || {},
-        extensions: data.extensions || {},
-        uploads: data.uploads || []
-      });
+      if (!resolved) {
+        resolved = true;
+        resolve({
+          pages: data.pages || [],
+          pageGroups: data.pageGroups || [],
+          blogArticles: data.blogArticles || [],
+          catRows: data.catRows || [],
+          userRows: data.userRows || [],
+          inventoryRows: data.inventoryRows || [],
+          customerRows: data.customerRows || [],
+          employeeRows: data.employeeRows || [],
+          attendanceRows: data.attendanceRows || [],
+          reservationRows: data.reservationRows || [],
+          componentRows: data.componentRows || [],
+          movieList: data.movieList || [],
+          settings: data.settings || {},
+          acl: data.acl || {},
+          extensions: data.extensions || {},
+          uploads: data.uploads || []
+        });
+      }
     });
-    unsubscribe();
+    // Don't unsubscribe immediately - let it resolve first
+    setTimeout(() => {
+      unsubscribe();
+    }, 100);
   });
 }
 
@@ -54,8 +61,8 @@ function importData(data) {
 
 // Open project dialog
 export async function openProject() {
-  if (!isBrowser) return;
-  
+  if (!isBrowser) return null;
+
   try {
     const selected = await open({
       multiple: false,
@@ -64,17 +71,20 @@ export async function openProject() {
         extensions: ['json', 'cms']
       }]
     });
-    
+
     if (!selected) return null;
+
+    // Read the project file to get the data
+    const projectData = await invoke('open_project', { path: selected });
     
-    const project = await invoke('open_project', { path: selected });
-    currentProject.set(project);
+    // Set project state with path
+    currentProject.set(selected);
     isProjectOpen.set(true);
-    
+
     // Import data into CMS
-    importData(project.data);
-    
-    return project;
+    importData(projectData);
+
+    return selected;
   } catch (error) {
     console.error('Failed to open project:', error);
     throw error;
@@ -83,45 +93,73 @@ export async function openProject() {
 
 // Save project dialog
 export async function saveProject() {
-  if (!isBrowser) return;
-  
+  if (!isBrowser) return null;
+
   try {
+    console.log('Saving project...');
     const data = await getExportData();
-    
-    // Get current project path or ask for new one
+    console.log('Got CMS data:', Object.keys(data).length, 'fields');
+
+    // Get current project path
     let projectPath = null;
-    const current = await invoke('get_current_project');
-    
-    if (current) {
-      projectPath = current;
-    } else {
+    try {
+      const current = await invoke('get_current_project');
+      console.log('Current project:', current);
+      if (current) {
+        projectPath = current;
+      }
+    } catch (e) {
+      console.log('No current project, will show save dialog');
+    }
+
+    // If no current project, show save dialog
+    if (!projectPath) {
+      console.log('Opening save dialog...');
       projectPath = await save({
+        title: 'Save Project',
         filters: [{
           name: 'TABLES Project',
           extensions: ['json', 'cms']
         }],
         defaultPath: `project${PROJECT_EXTENSION}`
       });
+      console.log('Save dialog result:', projectPath);
     }
-    
-    if (!projectPath) return null;
-    
-    // Ensure extension
-    if (!projectPath.endsWith(PROJECT_EXTENSION)) {
+
+    if (!projectPath) {
+      console.log('Save cancelled');
+      return null;
+    }
+
+    // Ensure extension - handle cases where dialog adds .json automatically
+    const normalizedPath = projectPath.toLowerCase();
+    if (normalizedPath.endsWith('.json.cms')) {
+      // Already has correct extension
+      console.log('Path already has .json.cms extension');
+    } else if (normalizedPath.endsWith('.json')) {
+      // Has .json, add .cms
+      console.log('Adding .cms to .json extension');
+      projectPath = projectPath + '.cms';
+    } else if (!normalizedPath.endsWith(PROJECT_EXTENSION)) {
+      // No extension, add full .json.cms
+      console.log('Adding full .json.cms extension');
       projectPath = projectPath + PROJECT_EXTENSION;
     }
-    
-    const savedPath = await invoke('save_project', { 
-      path: projectPath, 
-      data 
+
+    console.log('Saving to:', projectPath);
+    const savedPath = await invoke('save_project', {
+      path: projectPath,
+      data
     });
-    
+
     currentProject.set({ path: savedPath, name: projectPath.split('/').pop() });
     isProjectOpen.set(true);
-    
+    console.log('Project saved successfully!');
+
     return savedPath;
   } catch (error) {
     console.error('Failed to save project:', error);
+    alert('Failed to save project: ' + error.message);
     throw error;
   }
 }

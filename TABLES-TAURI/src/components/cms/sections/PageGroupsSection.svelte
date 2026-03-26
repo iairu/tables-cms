@@ -474,7 +474,7 @@
   
   .groups-list-panel {
     width: 320px;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     display: flex;
@@ -589,7 +589,7 @@
   
   .group-editor-panel {
     flex: 1;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     overflow: hidden;
@@ -743,7 +743,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: white;
+    background: var(--bg-card, white);
     border: 1px solid #e2e8f0;
     border-radius: 6px;
     padding: 12px;
@@ -794,7 +794,7 @@
   
   .dropdown-preview {
     margin-top: 20px;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 8px;
     padding: 16px;
     border: 1px solid #e2e8f0;
@@ -827,7 +827,7 @@
   }
   
   .dropdown-items {
-    background: white;
+    background: var(--bg-card, white);
   }
   
   .dropdown-item-preview {
@@ -992,7 +992,7 @@
   }
   
   .btn-secondary {
-    background: white;
+    background: var(--bg-card, white);
     color: #475569;
     border: 1px solid #e2e8f0;
   }

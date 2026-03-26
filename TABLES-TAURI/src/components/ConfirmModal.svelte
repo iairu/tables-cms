@@ -94,7 +94,7 @@
   }
   
   .modal-content {
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     padding: 24px;
     max-width: 400px;
@@ -149,7 +149,7 @@
   }
   
   .btn-secondary {
-    background: #f1f5f9;
+    background: var(--bg-tertiary, #f1f5f9);
     color: #475569;
   }
   

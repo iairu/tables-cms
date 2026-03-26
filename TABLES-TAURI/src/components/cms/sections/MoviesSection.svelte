@@ -320,7 +320,7 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    background: white;
+    background: var(--bg-card, white);
   }
   
   .editor-header h2 {
@@ -392,7 +392,7 @@
     height: 36px;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
-    background: white;
+    background: var(--bg-card, white);
     cursor: pointer;
     font-weight: 600;
     transition: all 0.2s;
@@ -433,7 +433,7 @@
   }
   
   .movie-item {
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -613,7 +613,7 @@
   .empty-state {
     text-align: center;
     padding: 60px 20px;
-    background: white;
+    background: var(--bg-card, white);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }

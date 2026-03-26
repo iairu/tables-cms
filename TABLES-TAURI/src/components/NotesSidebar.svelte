@@ -1,7 +1,8 @@
 <script>
+  import { onMount } from 'svelte';
+  
   export let isOpen = false;
-  export let onClose = () => {};
-
+  
   let noteText = '';
   let saveTimeout = null;
   let lastSaved = null;
@@ -9,7 +10,7 @@
   function autoSave() {
     // Clear any pending save
     if (saveTimeout) clearTimeout(saveTimeout);
-    
+
     // Debounce save - wait 500ms after last keystroke
     saveTimeout = setTimeout(() => {
       localStorage.setItem('notes-extension-data', noteText);
@@ -22,141 +23,118 @@
     autoSave();
   }
 
-  // Load existing notes
-  if (typeof window !== 'undefined' && isOpen) {
-    noteText = localStorage.getItem('notes-extension-data') || '';
-  }
+  // Load existing notes on mount
+  onMount(() => {
+    if (typeof window !== 'undefined') {
+      noteText = localStorage.getItem('notes-extension-data') || '';
+    }
+  });
 </script>
 
-{#if isOpen}
-  <div class="notes-sidebar-overlay" on:click={onClose}></div>
-  <aside class="notes-sidebar" class:open={isOpen}>
-    <div class="notes-header">
-      <h3><i class="fas fa-sticky-note"></i> Notes</h3>
-      <button class="btn-close" on:click={onClose}>
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-    
-    <div class="notes-content">
-      <textarea
-        bind:value={noteText}
-        on:input={handleInput}
-        placeholder="Write your notes here... (auto-saves)"
-      ></textarea>
-    </div>
+<aside class="notes-sidebar" class:open={isOpen}>
+  <div class="notes-header">
+    <h3><i class="fas fa-sticky-note"></i> Notes</h3>
+  </div>
 
-    <div class="notes-footer">
-      <span class="save-status">
-        {#if lastSaved}
-          <i class="fas fa-check"></i>
-          Saved at {lastSaved.toLocaleTimeString()}
-        {:else}
-          <i class="fas fa-clock"></i>
-          Type to auto-save...
-        {/if}
-      </span>
-    </div>
-  </aside>
-{/if}
+  <div class="notes-content">
+    <textarea
+      bind:value={noteText}
+      on:input={handleInput}
+      placeholder="Write your notes here... (auto-saves)"
+    ></textarea>
+  </div>
+
+  <div class="notes-footer">
+    <span class="save-status">
+      {#if lastSaved}
+        <i class="fas fa-check"></i>
+        Saved at {lastSaved.toLocaleTimeString()}
+      {:else}
+        <i class="fas fa-clock"></i>
+        Type to auto-save...
+      {/if}
+    </span>
+  </div>
+</aside>
 
 <style>
-  .notes-sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-  }
-  
   .notes-sidebar {
     position: fixed;
-    top: 0;
-    right: -400px;
-    width: 400px;
-    height: 100vh;
-    background: white;
-    z-index: 1000;
-    transition: right 0.3s ease;
+    top: 65px;  /* Below header */
+    right: 0;
+    width: 350px;
+    height: calc(100vh - 65px);
+    background: var(--bg-card, white);
+    z-index: 100;
     display: flex;
     flex-direction: column;
-    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    border-left: 1px solid var(--border-light, #e2e8f0);
+    transition: transform 0.3s ease;
   }
-  
+
   .notes-sidebar.open {
-    right: 0;
+    transform: translateX(0);
   }
-  
+
+  .notes-sidebar:not(.open) {
+    transform: translateX(100%);
+  }
+
   .notes-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding: 16px 20px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border-light, #e2e8f0);
+    background: var(--bg-secondary, #f8fafc);
   }
-  
+
   .notes-header h3 {
     margin: 0;
-    font-size: 18px;
-    color: #0f172a;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  
+
   .notes-header h3 i {
-    color: #2563eb;
+    color: var(--color-primary, #2563eb);
   }
-  
-  .btn-close {
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: #f1f5f9;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-    color: #64748b;
-  }
-  
-  .btn-close:hover {
-    background: #e2e8f0;
-  }
-  
+
   .notes-content {
     flex: 1;
-    padding: 20px;
+    padding: 16px;
     overflow-y: auto;
+    background: var(--bg-card, white);
   }
-  
+
   .notes-content textarea {
     width: 100%;
     height: 100%;
-    min-height: 400px;
-    border: 1px solid #e2e8f0;
+    min-height: 300px;
+    border: 1px solid var(--border-light, #e2e8f0);
     border-radius: 6px;
-    padding: 16px;
+    padding: 12px;
     font-family: inherit;
     font-size: 14px;
     line-height: 1.6;
-    resize: vertical;
+    resize: none;
+    background: var(--bg-card, white);
+    color: var(--text-primary, #0f172a);
   }
-  
+
   .notes-content textarea:focus {
     outline: none;
-    border-color: #2563eb;
+    border-color: var(--color-primary, #2563eb);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   }
-  
+
   .notes-footer {
     padding: 12px 20px;
-    border-top: 1px solid #e2e8f0;
-    background: #f8fafc;
+    border-top: 1px solid var(--border-light, #e2e8f0);
+    background: var(--bg-secondary, #f8fafc);
   }
 
   .save-status {
@@ -164,7 +142,7 @@
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    color: #64748b;
+    color: var(--text-tertiary, #64748b);
   }
 
   .save-status i {

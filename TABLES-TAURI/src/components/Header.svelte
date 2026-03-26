@@ -93,8 +93,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px 20px;
-    background: white;
-    border-bottom: 1px solid #e2e8f0;
+    background: var(--bg-card, white);
+    border-bottom: 1px solid var(--border-light, #e2e8f0);
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     z-index: 1000;
   }
@@ -107,7 +107,7 @@
   .app-title {
     font-size: 20px;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary, #0f172a);
     margin: 0;
     display: flex;
     align-items: center;
@@ -115,7 +115,7 @@
   }
 
   .app-title i {
-    color: #2563eb;
+    color: var(--color-primary, #2563eb);
   }
 
   .header-right {
@@ -128,18 +128,18 @@
     width: 36px;
     height: 36px;
     border: none;
-    background: #f1f5f9;
+    background: var(--bg-tertiary, #f1f5f9);
     border-radius: 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.2s;
-    color: #475569;
+    color: var(--text-secondary, #475569);
   }
 
   .btn-icon:hover {
-    background: #e2e8f0;
+    background: var(--border-light, #e2e8f0);
   }
 
   .btn-primary,
@@ -160,36 +160,36 @@
   }
 
   .btn-primary {
-    background: #2563eb;
+    background: var(--color-primary, #2563eb);
     color: white;
   }
 
   .btn-primary:hover {
-    background: #1d4ed8;
+    background: var(--color-primary-dark, #1d4ed8);
   }
 
   .btn-success {
-    background: #10b981;
+    background: var(--color-secondary, #10b981);
     color: white;
   }
 
   .btn-success:hover {
-    background: #059669;
+    background: var(--color-secondary-dark, #059669);
   }
 
   .btn-secondary {
-    background: white;
-    color: #475569;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-card, white);
+    color: var(--text-secondary, #475569);
+    border: 1px solid var(--border-light, #e2e8f0);
   }
 
   .btn-secondary:hover {
-    background: #f8fafc;
+    background: var(--bg-secondary, #f8fafc);
   }
 
   .btn-disabled {
-    background: #cbd5e1;
-    color: #64748b;
+    background: var(--border-medium, #cbd5e1);
+    color: var(--text-tertiary, #64748b);
     cursor: not-allowed;
   }
 

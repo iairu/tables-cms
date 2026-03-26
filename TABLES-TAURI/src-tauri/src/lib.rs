@@ -21,6 +21,7 @@ pub struct AttachmentInfo {
     pub size: u64,
     pub path: String,
     pub created_at: u64,
+    pub data: String,  // Base64 data URI for preview
 }
 
 #[derive(Debug, Deserialize)]
@@ -54,6 +55,9 @@ fn save_attachment(app: tauri::AppHandle, request: SaveAttachmentRequest) -> Res
     fs::write(&file_path, &file_bytes)
         .map_err(|e| format!("Failed to write file: {}", e))?;
 
+    // Create data URI for preview
+    let data_uri = format!("data:{};base64,{}", request.r#type, base64_data);
+
     Ok(AttachmentInfo {
         id: attachment_id,
         name: request.name.clone(),
@@ -64,6 +68,7 @@ fn save_attachment(app: tauri::AppHandle, request: SaveAttachmentRequest) -> Res
             .duration_since(std::time::UNIX_EPOCH)
             .map_err(|e| e.to_string())?
             .as_secs(),
+        data: data_uri,
     })
 }
 
@@ -141,6 +146,9 @@ fn upload_file(app: tauri::AppHandle, request: SaveAttachmentRequest) -> Result<
     fs::write(&file_path, &file_bytes)
         .map_err(|e| format!("Failed to write file: {}", e))?;
 
+    // Create data URI for preview
+    let data_uri = format!("data:{};base64,{}", request.r#type, base64_data);
+
     Ok(AttachmentInfo {
         id: file_id,
         name: request.name.clone(),
@@ -151,6 +159,7 @@ fn upload_file(app: tauri::AppHandle, request: SaveAttachmentRequest) -> Result<
             .duration_since(std::time::UNIX_EPOCH)
             .map_err(|e| e.to_string())?
             .as_secs(),
+        data: data_uri,
     })
 }
 
@@ -162,21 +171,28 @@ fn get_uploads(app: tauri::AppHandle) -> Result<Vec<AttachmentInfo>, String> {
 
     let uploads_dir = app_data_dir.join("uploads");
     let mut uploads = Vec::new();
-    
+
     if let Ok(entries) = fs::read_dir(&uploads_dir) {
         for entry in entries.flatten() {
             let metadata = fs::metadata(entry.path())
                 .map_err(|e| format!("Failed to get metadata: {}", e))?;
-            
+
             let file_name = entry.file_name().to_string_lossy().to_string();
             let parts: Vec<&str> = file_name.splitn(2, '_').collect();
             let file_id = parts.get(0).unwrap_or(&"unknown").to_string();
             let original_name = parts.get(1).unwrap_or(&"unknown").to_string();
             
+            // Read file content for preview
+            let file_bytes = fs::read(&entry.path())
+                .map_err(|e| format!("Failed to read file: {}", e))?;
+            let base64_data = BASE64.encode(&file_bytes);
+            let mime_type = guess_mime_type(&entry.path());
+            let data_uri = format!("data:{};base64,{}", mime_type, base64_data);
+
             uploads.push(AttachmentInfo {
                 id: file_id,
                 name: original_name,
-                mime_type: guess_mime_type(&entry.path()),
+                mime_type: mime_type.clone(),
                 size: metadata.len(),
                 path: entry.path().to_string_lossy().to_string(),
                 created_at: metadata.modified()
@@ -184,10 +200,11 @@ fn get_uploads(app: tauri::AppHandle) -> Result<Vec<AttachmentInfo>, String> {
                     .duration_since(std::time::UNIX_EPOCH)
                     .map_err(|e| e.to_string())?
                     .as_secs(),
+                data: data_uri,
             });
         }
     }
-    
+
     Ok(uploads)
 }
 
@@ -249,12 +266,12 @@ pub struct ProjectFile {
 }
 
 #[tauri::command]
-fn open_project(app: tauri::AppHandle, path: String) -> Result<ProjectFile, String> {
-    // Read project file
+fn open_project(app: tauri::AppHandle, path: String) -> Result<String, String> {
+    // Read project file to validate it
     let content = fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read project file: {}", e))?;
-    
-    let project: ProjectFile = serde_json::from_str(&content)
+
+    let _project: ProjectFile = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse project file: {}", e))?;
     
     // Add to recent projects
@@ -266,17 +283,17 @@ fn open_project(app: tauri::AppHandle, path: String) -> Result<ProjectFile, Stri
                 recent.truncate(10);
             }
         }
-        
+
         // Update current project
         let mut current = CURRENT_PROJECT.lock().unwrap();
         *current = Some(path.clone());
-        
+
         // Emit event to frontend
-        let _ = app.emit("project-opened", &project);
+        let _ = app.emit("project-opened", &path);
         let _ = app.emit("recent-projects-updated", recent.clone());
     }
-    
-    Ok(project)
+
+    Ok(path)
 }
 
 #[tauri::command]
