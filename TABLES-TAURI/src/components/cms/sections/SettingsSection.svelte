@@ -24,7 +24,27 @@
     collabUserName: '',
     gdprConsent: false,
     devMode: false,
-    showComponentIds: false
+    showComponentIds: false,
+    // Social Media
+    facebookUrl: '',
+    twitterUrl: '',
+    instagramUrl: '',
+    youtubeUrl: '',
+    linkedinUrl: '',
+    tiktokUrl: '',
+    enableSocialSharing: false,
+    enableOpenGraph: true,
+    enableTwitterCards: true,
+    // ACL
+    aclPagesEdit: true,
+    aclBlogEdit: true,
+    aclUploadsEdit: true,
+    aclPedigreeEdit: true,
+    aclRentalEdit: true,
+    aclMoviesEdit: true,
+    aclSettingsEdit: true,
+    aclDeploy: true,
+    aclExtensions: true
   };
 
   // Initialize local settings from CMS data (only once on first load)
@@ -52,12 +72,15 @@
   ];
   
   let activeTab = 'general';
-  
+
   const tabs = [
     { id: 'general', label: 'General', icon: 'fa-cog' },
     { id: 'theme', label: 'Theme', icon: 'fa-palette' },
     { id: 'deployment', label: 'Deployment', icon: 'fa-rocket' },
     { id: 'collaboration', label: 'Collaboration', icon: 'fa-users' },
+    { id: 'languages', label: 'Languages', icon: 'fa-language' },
+    { id: 'social', label: 'Social Media', icon: 'fa-share-alt' },
+    { id: 'acl', label: 'ACL', icon: 'fa-user-shield' },
     { id: 'advanced', label: 'Advanced', icon: 'fa-wrench' }
   ];
   
@@ -387,6 +410,366 @@
           
           <button class="btn-primary" on:click={handleSaveSettings}>
             <i class="fas fa-save"></i> Save Settings
+          </button>
+        </div>
+      {:else if activeTab === 'languages'}
+        <div class="tab-content">
+          <h2><i class="fas fa-language"></i> Language Settings</h2>
+
+          <div class="settings-group">
+            <h3>Default Language</h3>
+
+            <div class="form-group">
+              <label for="defaultLanguage">Site Default Language</label>
+              <select id="defaultLanguage" bind:value={localSettings.language}>
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="it">Italiano</option>
+                <option value="pt">Português</option>
+                <option value="nl">Nederlands</option>
+                <option value="ja">日本語</option>
+                <option value="zh">中文</option>
+                <option value="ko">한국어</option>
+                <option value="ru">Русский</option>
+                <option value="ar">العربية</option>
+              </select>
+              <p class="help-text">Default language for content and UI</p>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Supported Languages</h3>
+            <p class="help-text" style="margin-bottom: 16px;">
+              Select which languages your site should support. Content can be translated for each enabled language.
+            </p>
+            <div class="language-grid">
+              <label class="language-option">
+                <input type="checkbox" checked />
+                <span class="language-flag">🇺🇸</span>
+                <span class="language-name">English</span>
+              </label>
+              <label class="language-option">
+                <input type="checkbox" />
+                <span class="language-flag">🇪🇸</span>
+                <span class="language-name">Español</span>
+              </label>
+              <label class="language-option">
+                <input type="checkbox" />
+                <span class="language-flag">🇫🇷</span>
+                <span class="language-name">Français</span>
+              </label>
+              <label class="language-option">
+                <input type="checkbox" />
+                <span class="language-flag">🇩🇪</span>
+                <span class="language-name">Deutsch</span>
+              </label>
+              <label class="language-option">
+                <input type="checkbox" />
+                <span class="language-flag">🇮🇹</span>
+                <span class="language-name">Italiano</span>
+              </label>
+              <label class="language-option">
+                <input type="checkbox" />
+                <span class="language-flag">🇵🇹</span>
+                <span class="language-name">Português</span>
+              </label>
+              <label class="language-option">
+                <input type="checkbox" />
+                <span class="language-flag">🇳🇱</span>
+                <span class="language-name">Nederlands</span>
+              </label>
+              <label class="language-option">
+                <input type="checkbox" />
+                <span class="language-flag">🇯🇵</span>
+                <span class="language-name">日本語</span>
+              </label>
+              <label class="language-option">
+                <input type="checkbox" />
+                <span class="language-flag">🇨🇳</span>
+                <span class="language-name">中文</span>
+              </label>
+              <label class="language-option">
+                <input type="checkbox" />
+                <span class="language-flag">🇰🇷</span>
+                <span class="language-name">한국어</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Translation Management</h3>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" />
+                <span>Enable auto-translation suggestions</span>
+              </label>
+              <p class="help-text">Use machine translation to suggest translations for content</p>
+            </div>
+          </div>
+
+          <button class="btn-primary" on:click={handleSaveSettings}>
+            <i class="fas fa-save"></i> Save Settings
+          </button>
+        </div>
+      {:else if activeTab === 'social'}
+        <div class="tab-content">
+          <h2><i class="fas fa-share-alt"></i> Social Media Settings</h2>
+
+          <div class="settings-group">
+            <h3>Social Profiles</h3>
+            <p class="help-text" style="margin-bottom: 16px;">
+              Add your social media profile links. These will be used for SEO and social sharing.
+            </p>
+
+            <div class="form-group">
+              <label for="facebookUrl">Facebook URL</label>
+              <input
+                id="facebookUrl"
+                type="url"
+                bind:value={localSettings.facebookUrl}
+                placeholder="https://facebook.com/yourpage"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="twitterUrl">Twitter/X URL</label>
+              <input
+                id="twitterUrl"
+                type="url"
+                bind:value={localSettings.twitterUrl}
+                placeholder="https://twitter.com/yourhandle"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="instagramUrl">Instagram URL</label>
+              <input
+                id="instagramUrl"
+                type="url"
+                bind:value={localSettings.instagramUrl}
+                placeholder="https://instagram.com/yourprofile"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="youtubeUrl">YouTube URL</label>
+              <input
+                id="youtubeUrl"
+                type="url"
+                bind:value={localSettings.youtubeUrl}
+                placeholder="https://youtube.com/yourchannel"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="linkedinUrl">LinkedIn URL</label>
+              <input
+                id="linkedinUrl"
+                type="url"
+                bind:value={localSettings.linkedinUrl}
+                placeholder="https://linkedin.com/company/yourcompany"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="tiktokUrl">TikTok URL</label>
+              <input
+                id="tiktokUrl"
+                type="url"
+                bind:value={localSettings.tiktokUrl}
+                placeholder="https://tiktok.com/@yourhandle"
+              />
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Social Sharing</h3>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" bind:checked={localSettings.enableSocialSharing} />
+                <span>Enable social sharing buttons on pages</span>
+              </label>
+              <p class="help-text">Show share buttons on published pages</p>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" bind:checked={localSettings.enableOpenGraph} />
+                <span>Enable Open Graph tags</span>
+              </label>
+              <p class="help-text">Generate Open Graph meta tags for better social sharing</p>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" bind:checked={localSettings.enableTwitterCards} />
+                <span>Enable Twitter Cards</span>
+              </label>
+              <p class="help-text">Generate Twitter Card meta tags</p>
+            </div>
+          </div>
+
+          <button class="btn-primary" on:click={handleSaveSettings}>
+            <i class="fas fa-save"></i> Save Settings
+          </button>
+        </div>
+      {:else if activeTab === 'acl'}
+        <div class="tab-content">
+          <h2><i class="fas fa-user-shield"></i> Access Control List (ACL)</h2>
+
+          <div class="settings-group">
+            <h3>Permission Management</h3>
+            <p class="help-text" style="margin-bottom: 16px;">
+              Configure access permissions for different user roles and features.
+            </p>
+
+            <div class="acl-permissions">
+              <div class="permission-group">
+                <h4>Content Permissions</h4>
+                <div class="permission-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" bind:checked={localSettings.aclPagesEdit} />
+                    <span>Edit Pages</span>
+                  </label>
+                  <select>
+                    <option value="admin">Admin Only</option>
+                    <option value="editor">Editors & Admin</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+                <div class="permission-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" bind:checked={localSettings.aclBlogEdit} />
+                    <span>Edit Blog Articles</span>
+                  </label>
+                  <select>
+                    <option value="admin">Admin Only</option>
+                    <option value="editor">Editors & Admin</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+                <div class="permission-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" bind:checked={localSettings.aclUploadsEdit} />
+                    <span>Manage Uploads</span>
+                  </label>
+                  <select>
+                    <option value="admin">Admin Only</option>
+                    <option value="editor">Editors & Admin</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="permission-group">
+                <h4>Extension Permissions</h4>
+                <div class="permission-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" bind:checked={localSettings.aclPedigreeEdit} />
+                    <span>Edit Pedigree Records</span>
+                  </label>
+                  <select>
+                    <option value="admin">Admin Only</option>
+                    <option value="editor">Editors & Admin</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+                <div class="permission-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" bind:checked={localSettings.aclRentalEdit} />
+                    <span>Manage Rentals</span>
+                  </label>
+                  <select>
+                    <option value="admin">Admin Only</option>
+                    <option value="editor">Editors & Admin</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+                <div class="permission-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" bind:checked={localSettings.aclMoviesEdit} />
+                    <span>Edit Movie Tracker</span>
+                  </label>
+                  <select>
+                    <option value="admin">Admin Only</option>
+                    <option value="editor">Editors & Admin</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="permission-group">
+                <h4>System Permissions</h4>
+                <div class="permission-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" bind:checked={localSettings.aclSettingsEdit} />
+                    <span>Modify Settings</span>
+                  </label>
+                  <select>
+                    <option value="admin">Admin Only</option>
+                    <option value="editor">Editors & Admin</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+                <div class="permission-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" bind:checked={localSettings.aclDeploy} />
+                    <span>Deploy Site</span>
+                  </label>
+                  <select>
+                    <option value="admin">Admin Only</option>
+                    <option value="editor">Editors & Admin</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+                <div class="permission-item">
+                  <label class="checkbox-label">
+                    <input type="checkbox" bind:checked={localSettings.aclExtensions} />
+                    <span>Manage Extensions</span>
+                  </label>
+                  <select>
+                    <option value="admin">Admin Only</option>
+                    <option value="editor">Editors & Admin</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>User Roles</h3>
+            <p class="help-text" style="margin-bottom: 16px;">
+              Define custom user roles and their associated permissions.
+            </p>
+            <div class="roles-list">
+              <div class="role-card">
+                <div class="role-header">
+                  <h4>Admin</h4>
+                  <span class="role-badge">Default</span>
+                </div>
+                <p>Full access to all features and settings</p>
+              </div>
+              <div class="role-card">
+                <div class="role-header">
+                  <h4>Editor</h4>
+                  <span class="role-badge">Default</span>
+                </div>
+                <p>Can edit content but cannot modify settings or deploy</p>
+              </div>
+              <div class="role-card add-role">
+                <button class="btn-secondary">
+                  <i class="fas fa-plus"></i> Add Custom Role
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-primary" on:click={handleSaveSettings}>
+            <i class="fas fa-save"></i> Save ACL Settings
           </button>
         </div>
       {:else if activeTab === 'advanced'}
@@ -823,8 +1206,145 @@
     background: #ef4444;
     color: white;
   }
-  
+
   .btn-danger:hover {
     background: #dc2626;
+  }
+
+  /* Language Settings Styles */
+  .language-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .language-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .language-option:hover {
+    background: var(--bg-tertiary);
+  }
+
+  .language-flag {
+    font-size: 24px;
+  }
+
+  .language-name {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  /* Social Media Styles */
+  .social-profiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  /* ACL Styles */
+  .acl-permissions {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .permission-group {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+  }
+
+  .permission-group h4 {
+    margin: 0 0 16px;
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+  }
+
+  .permission-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .permission-item:last-child {
+    border-bottom: none;
+  }
+
+  .permission-item select {
+    min-width: 150px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  .roles-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+  }
+
+  .role-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    border: 2px solid transparent;
+    transition: all var(--transition-fast);
+  }
+
+  .role-card:hover {
+    border-color: var(--color-primary);
+  }
+
+  .role-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .role-header h4 {
+    margin: 0;
+    font-size: var(--text-base);
+  }
+
+  .role-badge {
+    padding: 4px 8px;
+    background: var(--color-primary);
+    color: white;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .role-card p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+  }
+
+  .role-card.add-role {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 2px dashed var(--border-medium);
+    cursor: pointer;
+  }
+
+  .role-card.add-role:hover {
+    border-color: var(--color-primary);
+    background: rgba(37, 99, 235, 0.05);
   }
 </style>
