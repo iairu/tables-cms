@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import { io } from 'socket.io-client';
 import { invoke } from '@tauri-apps/api/core';
+import { scheduleAutoSave } from './projectManager.js';
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -170,6 +171,7 @@ export function savePages(pages, skipBroadcast = false) {
     broadcastDataUpdate('pages', pages);
   }
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function savePageGroups(pageGroups, skipBroadcast = false) {
@@ -179,6 +181,7 @@ export function savePageGroups(pageGroups, skipBroadcast = false) {
     broadcastDataUpdate('pageGroups', pageGroups);
   }
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveBlogArticles(articles, skipBroadcast = false) {
@@ -190,6 +193,7 @@ export function saveBlogArticles(articles, skipBroadcast = false) {
   });
   saveToStorage('blogArticles', articles);
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveSettings(settings, skipBroadcast = false) {
@@ -200,6 +204,7 @@ export function saveSettings(settings, skipBroadcast = false) {
     return { ...data, settings };
   });
   saveToStorage('settings', settings);
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveExtensions(extensions, skipBroadcast = false) {
@@ -210,6 +215,7 @@ export function saveExtensions(extensions, skipBroadcast = false) {
     return { ...data, extensions };
   });
   saveToStorage('extensions', extensions);
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveCatRows(rows, skipBroadcast = false) {
@@ -221,6 +227,7 @@ export function saveCatRows(rows, skipBroadcast = false) {
   });
   saveToStorage('catRows', rows);
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveUserRows(rows, skipBroadcast = false) {
@@ -232,6 +239,7 @@ export function saveUserRows(rows, skipBroadcast = false) {
   });
   saveToStorage('userRows', rows);
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveInventoryRows(rows, skipBroadcast = false) {
@@ -243,6 +251,7 @@ export function saveInventoryRows(rows, skipBroadcast = false) {
   });
   saveToStorage('inventoryRows', rows);
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveCustomerRows(rows, skipBroadcast = false) {
@@ -254,6 +263,7 @@ export function saveCustomerRows(rows, skipBroadcast = false) {
   });
   saveToStorage('customerRows', rows);
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveEmployeeRows(rows, skipBroadcast = false) {
@@ -265,6 +275,7 @@ export function saveEmployeeRows(rows, skipBroadcast = false) {
   });
   saveToStorage('employeeRows', rows);
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveAttendanceRows(rows, skipBroadcast = false) {
@@ -276,6 +287,7 @@ export function saveAttendanceRows(rows, skipBroadcast = false) {
   });
   saveToStorage('attendanceRows', rows);
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveReservationRows(rows, skipBroadcast = false) {
@@ -287,6 +299,7 @@ export function saveReservationRows(rows, skipBroadcast = false) {
   });
   saveToStorage('reservationRows', rows);
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveComponentRows(rows, skipBroadcast = false) {
@@ -298,6 +311,7 @@ export function saveComponentRows(rows, skipBroadcast = false) {
   });
   saveToStorage('componentRows', rows);
   scheduleBuild();
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 export function saveMovieList(list, skipBroadcast = false) {
@@ -308,6 +322,7 @@ export function saveMovieList(list, skipBroadcast = false) {
     return { ...data, movieList: list };
   });
   saveToStorage('movieList', list);
+  scheduleAutoSave(); // Trigger auto-save
 }
 
 // Build scheduling

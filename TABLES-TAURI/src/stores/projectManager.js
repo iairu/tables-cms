@@ -10,8 +10,18 @@ export const currentProject = writable(null);
 export const recentProjects = writable([]);
 export const isProjectOpen = writable(false);
 
+// Auto-save state
+export const autoSaveEnabled = writable(false);
+export const lastAutoSave = writable(null);
+export const autoSaveStatus = writable('idle'); // 'idle', 'saving', 'success', 'error'
+
 // Project file extension
 const PROJECT_EXTENSION = '.json.cms';
+
+// Auto-save configuration
+const AUTO_SAVE_DELAY = 5000; // 5 seconds after changes
+let autoSaveTimeout = null;
+let hasManualSave = false;
 
 // Get all CMS data for export
 function getExportData() {
@@ -154,6 +164,10 @@ export async function saveProject() {
 
     currentProject.set({ path: savedPath, name: projectPath.split('/').pop() });
     isProjectOpen.set(true);
+    
+    // Enable auto-save after first manual save
+    enableAutoSave();
+    
     console.log('Project saved successfully!');
 
     return savedPath;
@@ -207,17 +221,92 @@ export async function clearRecentProjects() {
 // Open recent project by path
 export async function openRecentProject(path) {
   if (!isBrowser) return;
-  
+
   try {
     const project = await invoke('open_project', { path });
     currentProject.set(project);
     isProjectOpen.set(true);
+    hasManualSave = false; // Reset manual save flag on open
+    autoSaveEnabled.set(false); // Disable auto-save until first manual save
     importData(project.data);
     return project;
   } catch (error) {
     console.error('Failed to open recent project:', error);
     throw error;
   }
+}
+
+// Enable auto-save (called after first manual save)
+export function enableAutoSave() {
+  if (!isBrowser) return;
+  hasManualSave = true;
+  autoSaveEnabled.set(true);
+  console.log('Auto-save enabled');
+}
+
+// Internal auto-save function
+async function performAutoSave() {
+  if (!isBrowser) return;
+  
+  try {
+    autoSaveStatus.set('saving');
+    console.log('Auto-saving project...');
+    
+    const data = await getExportData();
+    const current = await invoke('get_current_project');
+    
+    if (!current) {
+      console.log('No current project, skipping auto-save');
+      autoSaveStatus.set('idle');
+      return;
+    }
+    
+    const savedPath = await invoke('save_project', {
+      path: current,
+      data
+    });
+    
+    lastAutoSave.set(Date.now());
+    autoSaveStatus.set('success');
+    console.log('Auto-save completed successfully');
+    
+    // Reset to idle after 2 seconds
+    setTimeout(() => {
+      autoSaveStatus.set('idle');
+    }, 2000);
+  } catch (error) {
+    console.error('Auto-save failed:', error);
+    autoSaveStatus.set('error');
+  }
+}
+
+// Schedule auto-save (debounced)
+export function scheduleAutoSave() {
+  if (!isBrowser || !hasManualSave) return;
+  
+  // Clear existing timeout
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout);
+  }
+  
+  // Schedule new auto-save
+  autoSaveTimeout = setTimeout(() => {
+    performAutoSave();
+  }, AUTO_SAVE_DELAY);
+}
+
+// Cancel pending auto-save
+export function cancelAutoSave() {
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = null;
+  }
+}
+
+// Force auto-save immediately
+export async function triggerAutoSave() {
+  if (!isBrowser || !hasManualSave) return;
+  await performAutoSave();
 }
 
 // Listen for menu events

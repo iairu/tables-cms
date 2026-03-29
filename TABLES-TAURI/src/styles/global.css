@@ -73,7 +73,7 @@
    Theme Definitions
    ======================================== */
 
-/* Synthwave Theme */
+/* Synthwave Theme - Enhanced with better borders */
 .theme-synthwave {
   --color-primary: #ff6b9d;
   --color-primary-dark: #ff4785;
@@ -81,27 +81,27 @@
   --color-secondary: #00f5d4;
   --color-secondary-dark: #00c9a9;
   --color-accent: #f9ed69;
-  
+
   --bg-primary: #2b213a;
   --bg-secondary: #362b48;
   --bg-tertiary: #423659;
   --bg-card: #362b48;
-  
+
   --text-primary: #f5f5f5;
   --text-secondary: #e0e0e0;
   --text-tertiary: #b0b0b0;
   --text-muted: #808080;
-  
-  --border-light: #4a3f5c;
-  --border-medium: #5a4f6c;
-  --border-dark: #6a5f7c;
-  
+
+  --border-light: rgba(255, 107, 157, 0.3);
+  --border-medium: rgba(255, 107, 157, 0.5);
+  --border-dark: rgba(255, 107, 157, 0.7);
+
   --shadow-sm: 0 1px 2px rgba(255, 107, 157, 0.1);
   --shadow-md: 0 4px 6px rgba(255, 107, 157, 0.15);
   --shadow-lg: 0 10px 15px rgba(255, 107, 157, 0.2);
 }
 
-/* Matrix Theme */
+/* Matrix Theme - Enhanced with better borders */
 .theme-matrix {
   --color-primary: #00ff41;
   --color-primary-dark: #00cc33;
@@ -109,27 +109,27 @@
   --color-secondary: #008f11;
   --color-secondary-dark: #00660c;
   --color-accent: #ffd700;
-  
+
   --bg-primary: #0d0208;
   --bg-secondary: #1a0510;
   --bg-tertiary: #270818;
   --bg-card: #1a0510;
-  
+
   --text-primary: #00ff41;
   --text-secondary: #00cc33;
   --text-tertiary: #009922;
   --text-muted: #006611;
-  
-  --border-light: #003311;
-  --border-medium: #004411;
-  --border-dark: #005511;
-  
+
+  --border-light: rgba(0, 255, 65, 0.2);
+  --border-medium: rgba(0, 255, 65, 0.4);
+  --border-dark: rgba(0, 255, 65, 0.6);
+
   --shadow-sm: 0 1px 2px rgba(0, 255, 65, 0.1);
   --shadow-md: 0 4px 6px rgba(0, 255, 65, 0.15);
   --shadow-lg: 0 10px 15px rgba(0, 255, 65, 0.2);
 }
 
-/* Monokai Theme */
+/* Monokai Theme - Enhanced with better borders */
 .theme-monokai {
   --color-primary: #a6e22e;
   --color-primary-dark: #8bc31a;
@@ -137,27 +137,27 @@
   --color-secondary: #66d9ef;
   --color-secondary-dark: #4db8e2;
   --color-accent: #fd971f;
-  
+
   --bg-primary: #272822;
   --bg-secondary: #2d2e27;
   --bg-tertiary: #3e3f38;
   --bg-card: #2d2e27;
-  
+
   --text-primary: #f8f8f2;
   --text-secondary: #e8e8e3;
   --text-tertiary: #a8a8a3;
   --text-muted: #75715e;
-  
-  --border-light: #3e3f38;
-  --border-medium: #4e4f48;
-  --border-dark: #5e5f58;
-  
+
+  --border-light: rgba(166, 226, 46, 0.2);
+  --border-medium: rgba(166, 226, 46, 0.35);
+  --border-dark: rgba(166, 226, 46, 0.5);
+
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* GitHub Theme */
+/* GitHub Theme - Enhanced with better borders */
 .theme-github {
   --color-primary: #0366d6;
   --color-primary-dark: #0255b3;
@@ -165,27 +165,27 @@
   --color-secondary: #28a745;
   --color-secondary-dark: #218838;
   --color-accent: #f9c513;
-  
+
   --bg-primary: #ffffff;
   --bg-secondary: #f6f8fa;
   --bg-tertiary: #eaecef;
   --bg-card: #ffffff;
-  
+
   --text-primary: #24292e;
   --text-secondary: #586069;
   --text-tertiary: #6a737d;
   --text-muted: #959da5;
-  
+
   --border-light: #e1e4e8;
   --border-medium: #d1d5da;
   --border-dark: #959da5;
-  
+
   --shadow-sm: 0 1px 2px rgba(27, 31, 35, 0.05);
   --shadow-md: 0 4px 6px rgba(27, 31, 35, 0.1);
   --shadow-lg: 0 10px 15px rgba(27, 31, 35, 0.15);
 }
 
-/* VSCode Theme */
+/* VSCode Theme - Enhanced with better borders */
 .theme-vscode {
   --color-primary: #007acc;
   --color-primary-dark: #005f9e;
@@ -193,27 +193,27 @@
   --color-secondary: #4ec9b0;
   --color-secondary-dark: #3db096;
   --color-accent: #ce9178;
-  
+
   --bg-primary: #1e1e1e;
   --bg-secondary: #252526;
   --bg-tertiary: #2d2d30;
   --bg-card: #252526;
-  
+
   --text-primary: #d4d4d4;
   --text-secondary: #cccccc;
   --text-tertiary: #9cdcfe;
   --text-muted: #808080;
-  
-  --border-light: #3e3e42;
-  --border-medium: #4e4e52;
-  --border-dark: #5e5e62;
-  
+
+  --border-light: rgba(0, 122, 204, 0.2);
+  --border-medium: rgba(0, 122, 204, 0.35);
+  --border-dark: rgba(0, 122, 204, 0.5);
+
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
 }
 
-/* Anime Theme */
+/* Anime Theme - Enhanced with better borders */
 .theme-anime {
   --color-primary: #ff6b9d;
   --color-primary-dark: #ff1493;
@@ -221,27 +221,27 @@
   --color-secondary: #7cfc00;
   --color-secondary-dark: #5cd600;
   --color-accent: #ffd700;
-  
+
   --bg-primary: #ffeff5;
   --bg-secondary: #ffe0ed;
   --bg-tertiary: #ffd1e6;
   --bg-card: #ffffff;
-  
+
   --text-primary: #ff1493;
   --text-secondary: #ff6b9d;
   --text-tertiary: #ff8fb3;
   --text-muted: #ffb3c9;
-  
-  --border-light: #ffd1e6;
-  --border-medium: #ffb3c9;
-  --border-dark: #ff8fb3;
-  
+
+  --border-light: rgba(255, 20, 147, 0.2);
+  --border-medium: rgba(255, 20, 147, 0.35);
+  --border-dark: rgba(255, 20, 147, 0.5);
+
   --shadow-sm: 0 1px 2px rgba(255, 20, 147, 0.1);
   --shadow-md: 0 4px 6px rgba(255, 20, 147, 0.15);
   --shadow-lg: 0 10px 15px rgba(255, 20, 147, 0.2);
 }
 
-/* Historic Paper Theme */
+/* Historic Paper Theme - Enhanced with better borders */
 .theme-historic {
   --color-primary: #8b4513;
   --color-primary-dark: #6b3410;
@@ -249,27 +249,27 @@
   --color-secondary: #556b2f;
   --color-secondary-dark: #405020;
   --color-accent: #daa520;
-  
+
   --bg-primary: #f4ecd8;
   --bg-secondary: #e8dcc4;
   --bg-tertiary: #d4c8b0;
   --bg-card: #f4ecd8;
-  
+
   --text-primary: #5c4b37;
   --text-secondary: #6d5c47;
   --text-tertiary: #7e6d57;
   --text-muted: #8f7e67;
-  
-  --border-light: #d4c8b0;
-  --border-medium: #c4b8a0;
-  --border-dark: #b4a890;
-  
+
+  --border-light: rgba(139, 69, 19, 0.2);
+  --border-medium: rgba(139, 69, 19, 0.35);
+  --border-dark: rgba(139, 69, 19, 0.5);
+
   --shadow-sm: 0 1px 2px rgba(92, 75, 55, 0.1);
   --shadow-md: 0 4px 6px rgba(92, 75, 55, 0.15);
   --shadow-lg: 0 10px 15px rgba(92, 75, 55, 0.2);
 }
 
-/* Senior Citizen Theme (High Contrast) */
+/* Senior Citizen Theme (High Contrast) - Enhanced with better borders */
 .theme-senior {
   --color-primary: #0047ab;
   --color-primary-dark: #003380;
@@ -277,27 +277,27 @@
   --color-secondary: #008000;
   --color-secondary-dark: #006600;
   --color-accent: #ff8c00;
-  
+
   --bg-primary: #ffffff;
   --bg-secondary: #f0f0f0;
   --bg-tertiary: #e0e0e0;
   --bg-card: #ffffff;
-  
+
   --text-primary: #000000;
   --text-secondary: #1a1a1a;
   --text-tertiary: #333333;
   --text-muted: #4d4d4d;
-  
+
   --border-light: #999999;
   --border-medium: #666666;
   --border-dark: #333333;
-  
+
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.2);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* Ayu Theme */
+/* Ayu Theme - Enhanced with better borders */
 .theme-ayu {
   --color-primary: #ffcc66;
   --color-primary-dark: #e6b85c;
@@ -305,21 +305,21 @@
   --color-secondary: #99e04b;
   --color-secondary-dark: #88c943;
   --color-accent: #ff6680;
-  
+
   --bg-primary: #1f2430;
   --bg-secondary: #252b38;
   --bg-tertiary: #2b3240;
   --bg-card: #252b38;
-  
+
   --text-primary: #e6e1cf;
   --text-secondary: #d9d4c5;
   --text-tertiary: #b3b1ad;
   --text-muted: #828482;
-  
-  --border-light: #353b4a;
-  --border-medium: #404758;
-  --border-dark: #4b5366;
-  
+
+  --border-light: rgba(255, 204, 102, 0.2);
+  --border-medium: rgba(255, 204, 102, 0.35);
+  --border-dark: rgba(255, 204, 102, 0.5);
+
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
