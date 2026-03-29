@@ -23,6 +23,8 @@ export const cmsData = writable({
   acl: {},
   extensions: {},
   uploads: [],
+  pageHistory: [], // History for pages
+  blogHistory: [], // History for blog articles
   isDataLoaded: false,
   isBuilding: false,
   lastSaved: null,
@@ -174,6 +176,31 @@ export function savePages(pages, skipBroadcast = false) {
   scheduleAutoSave(); // Trigger auto-save
 }
 
+export function savePageWithHistory(page, action = 'update', label = '') {
+  const existingPage = cmsDataValue?.pages.find(p => p.id === page.id);
+  
+  if (existingPage && action === 'update') {
+    // Save history before updating
+    savePageHistory(page.id, action, existingPage, label);
+  }
+  
+  const now = Date.now();
+  let updatedPages;
+  
+  if (action === 'create') {
+    const newPage = { ...page, id: now.toString(), createdAt: now, updatedAt: now };
+    updatedPages = [...(cmsDataValue?.pages || []), newPage];
+    savePageHistory(newPage.id, 'create', newPage, label || 'Created page');
+  } else {
+    updatedPages = (cmsDataValue?.pages || []).map(p =>
+      p.id === page.id ? { ...page, updatedAt: now } : p
+    );
+  }
+  
+  savePages(updatedPages, skipBroadcast);
+  return updatedPages;
+}
+
 export function savePageGroups(pageGroups, skipBroadcast = false) {
   cmsData.update(data => ({ ...data, pageGroups }));
   saveToStorage('pageGroups', pageGroups);
@@ -194,6 +221,31 @@ export function saveBlogArticles(articles, skipBroadcast = false) {
   saveToStorage('blogArticles', articles);
   scheduleBuild();
   scheduleAutoSave(); // Trigger auto-save
+}
+
+export function saveBlogArticleWithHistory(article, action = 'update', label = '') {
+  const existingArticle = cmsDataValue?.blogArticles.find(a => a.id === article.id);
+  
+  if (existingArticle && action === 'update') {
+    // Save history before updating
+    saveBlogHistory(article.id, action, existingArticle, label);
+  }
+  
+  const now = Date.now();
+  let updatedArticles;
+  
+  if (action === 'create') {
+    const newArticle = { ...article, id: now.toString(), createdAt: now, updatedAt: now };
+    updatedArticles = [...(cmsDataValue?.blogArticles || []), newArticle];
+    saveBlogHistory(newArticle.id, 'create', newArticle, label || 'Created article');
+  } else {
+    updatedArticles = (cmsDataValue?.blogArticles || []).map(a =>
+      a.id === article.id ? { ...article, updatedAt: now } : a
+    );
+  }
+  
+  saveBlogArticles(updatedArticles, skipBroadcast);
+  return updatedArticles;
 }
 
 export function saveSettings(settings, skipBroadcast = false) {
@@ -323,6 +375,180 @@ export function saveMovieList(list, skipBroadcast = false) {
   });
   saveToStorage('movieList', list);
   scheduleAutoSave(); // Trigger auto-save
+}
+
+// History Management Functions
+export function savePageHistory(pageId, action, data, label = '') {
+  const now = Date.now();
+  const historyEntry = {
+    id: `history_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    pageId,
+    action, // 'create', 'update', 'delete', 'rollback'
+    data: JSON.parse(JSON.stringify(data)), // Deep clone
+    label,
+    timestamp: now,
+    date: new Date(now).toISOString()
+  };
+
+  cmsData.update(state => {
+    const existingHistory = state.pageHistory || [];
+    const updatedHistory = [historyEntry, ...existingHistory].slice(0, 100); // Keep last 100 entries
+    return { ...state, pageHistory: updatedHistory };
+  });
+
+  saveToStorage('pageHistory', cmsDataValue?.pageHistory || []);
+  scheduleAutoSave();
+}
+
+export function saveBlogHistory(articleId, action, data, label = '') {
+  const now = Date.now();
+  const historyEntry = {
+    id: `history_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    articleId,
+    action, // 'create', 'update', 'delete', 'rollback'
+    data: JSON.parse(JSON.stringify(data)), // Deep clone
+    label,
+    timestamp: now,
+    date: new Date(now).toISOString()
+  };
+
+  cmsData.update(state => {
+    const existingHistory = state.blogHistory || [];
+    const updatedHistory = [historyEntry, ...existingHistory].slice(0, 100); // Keep last 100 entries
+    return { ...state, blogHistory: updatedHistory };
+  });
+
+  saveToStorage('blogHistory', cmsDataValue?.blogHistory || []);
+  scheduleAutoSave();
+}
+
+export function rollbackPage(pageId, historyEntry) {
+  if (!historyEntry || !historyEntry.data) return false;
+
+  const now = Date.now();
+  cmsData.update(state => {
+    const updatedPages = state.pages.map(page =>
+      page.id === pageId
+        ? { ...historyEntry.data, updatedAt: now }
+        : page
+    );
+    return { ...state, pages: updatedPages };
+  });
+
+  // Save rollback to history
+  savePageHistory(pageId, 'rollback', cmsDataValue?.pages.find(p => p.id === pageId), `Rolled back to: ${historyEntry.label || historyEntry.date}`);
+
+  return true;
+}
+
+export function rollbackBlog(articleId, historyEntry) {
+  if (!historyEntry || !historyEntry.data) return false;
+
+  const now = Date.now();
+  cmsData.update(state => {
+    const updatedArticles = state.blogArticles.map(article =>
+      article.id === articleId
+        ? { ...historyEntry.data, updatedAt: now }
+        : article
+    );
+    return { ...state, blogArticles: updatedArticles };
+  });
+
+  // Save rollback to history
+  saveBlogHistory(articleId, 'rollback', cmsDataValue?.blogArticles.find(a => a.id === articleId), `Rolled back to: ${historyEntry.label || historyEntry.date}`);
+
+  return true;
+}
+
+export function deleteHistoryEntry(historyId, type) {
+  cmsData.update(state => {
+    if (type === 'page') {
+      return {
+        ...state,
+        pageHistory: (state.pageHistory || []).filter(h => h.id !== historyId)
+      };
+    } else if (type === 'blog') {
+      return {
+        ...state,
+        blogHistory: (state.blogHistory || []).filter(h => h.id !== historyId)
+      };
+    }
+    return state;
+  });
+
+  if (type === 'page') {
+    saveToStorage('pageHistory', cmsDataValue?.pageHistory || []);
+  } else if (type === 'blog') {
+    saveToStorage('blogHistory', cmsDataValue?.blogHistory || []);
+  }
+}
+
+export function clearHistory(type) {
+  cmsData.update(state => {
+    if (type === 'page') {
+      return { ...state, pageHistory: [] };
+    } else if (type === 'blog') {
+      return { ...state, blogHistory: [] };
+    }
+    return state;
+  });
+
+  if (type === 'page') {
+    saveToStorage('pageHistory', []);
+  } else if (type === 'blog') {
+    saveToStorage('blogHistory', []);
+  }
+}
+
+export function exportHistory(type) {
+  const history = type === 'page' ? cmsDataValue?.pageHistory : cmsDataValue?.blogHistory;
+  const dataStr = JSON.stringify(history || [], null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${type}-history-${Date.now()}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function importHistory(type, file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (!Array.isArray(imported)) {
+          reject(new Error('Invalid history file format'));
+          return;
+        }
+
+        cmsData.update(state => {
+          const existingHistory = type === 'page' ? state.pageHistory : state.blogHistory;
+          const merged = [...imported, ...(existingHistory || [])];
+          
+          if (type === 'page') {
+            return { ...state, pageHistory: merged };
+          } else if (type === 'blog') {
+            return { ...state, blogHistory: merged };
+          }
+          return state;
+        });
+
+        if (type === 'page') {
+          saveToStorage('pageHistory', cmsDataValue?.pageHistory || []);
+        } else if (type === 'blog') {
+          saveToStorage('blogHistory', cmsDataValue?.blogHistory || []);
+        }
+
+        resolve(merged.length);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsText(file);
+  });
 }
 
 // Build scheduling
