@@ -22,6 +22,11 @@
   let showHistory = false;
   let selectedPageForHistory = null;
   let activeField = null;
+  
+  // Bulk operations state
+  let selectedPages = [];
+  let showBulkDeleteConfirm = false;
+  let selectAll = false;
 
   const componentTypes = [
     { id: 'hero', name: 'Hero Section', icon: 'fa-image' },
@@ -167,6 +172,70 @@
     if (sortBy !== field) return 'fa-sort';
     return sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
+
+  // Bulk operations functions
+  function toggleSelectAll() {
+    selectAll = !selectAll;
+    if (selectAll) {
+      selectedPages = filteredPages.map(p => p.id);
+    } else {
+      selectedPages = [];
+    }
+  }
+
+  function toggleSelectPage(pageId) {
+    const index = selectedPages.indexOf(pageId);
+    if (index > -1) {
+      selectedPages = selectedPages.filter(id => id !== pageId);
+    } else {
+      selectedPages = [...selectedPages, pageId];
+    }
+    // Update selectAll state based on selection
+    selectAll = selectedPages.length === filteredPages.length && filteredPages.length > 0;
+  }
+
+  function requestBulkDelete() {
+    if (selectedPages.length === 0) return;
+    showBulkDeleteConfirm = true;
+  }
+
+  function confirmBulkDelete() {
+    showBulkDeleteConfirm = false;
+    const pagesToDelete = cmsDataValue.pages.filter(p => selectedPages.includes(p.id));
+    
+    // Save history for each page
+    pagesToDelete.forEach(page => {
+      savePageWithHistory(page, 'delete', 'Bulk deleted');
+    });
+    
+    // Remove pages
+    const updatedPages = (cmsDataValue.pages || []).filter(p => !selectedPages.includes(p.id));
+    savePages(updatedPages);
+    
+    // Clear selection
+    selectedPages = [];
+    selectAll = false;
+  }
+
+  function getSelectedCount() {
+    return selectedPages.length;
+  }
+
+  function exportSelectedPages() {
+    if (selectedPages.length === 0) return;
+    
+    const pagesToExport = (cmsDataValue.pages || []).filter(p => selectedPages.includes(p.id));
+    const dataStr = JSON.stringify(pagesToExport, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `pages-export-${Date.now()}.json`;
+    link.click();
+    
+    URL.revokeObjectURL(url);
+  }
 </script>
 
 <div class="pages-section-compact">
@@ -194,10 +263,25 @@
           {/each}
         </select>
       </div>
-      <button class="btn btn-primary btn-sm" on:click={handleNewPage}>
-        <i class="fas fa-plus"></i>
-        New Page
-      </button>
+      {#if selectedPages.length > 0}
+        <div class="bulk-actions">
+          <span class="selected-count">{selectedPages.length} selected</span>
+          <button class="btn btn-secondary btn-sm" on:click={exportSelectedPages}>
+            <i class="fas fa-download"></i> Export
+          </button>
+          <button class="btn btn-danger btn-sm" on:click={requestBulkDelete}>
+            <i class="fas fa-trash"></i> Delete
+          </button>
+          <button class="btn btn-secondary btn-sm" on:click={() => { selectedPages = []; selectAll = false; }}>
+            <i class="fas fa-times"></i> Cancel
+          </button>
+        </div>
+      {:else}
+        <button class="btn btn-primary btn-sm" on:click={handleNewPage}>
+          <i class="fas fa-plus"></i>
+          New Page
+        </button>
+      {/if}
     </div>
   </div>
 
@@ -205,6 +289,15 @@
     <table class="data-table">
       <thead>
         <tr>
+          <th class="text-center" style="width: 40px;">
+            <input
+              type="checkbox"
+              class="bulk-select-checkbox"
+              checked={selectAll}
+              on:change={toggleSelectAll}
+              title="Select all pages"
+            />
+          </th>
           <th class="sortable" on:click={() => handleSort('name')}>
             <span class="sort-header">
               Name
@@ -231,16 +324,25 @@
       <tbody>
         {#if filteredPages.length === 0}
           <tr>
-            <td colspan="6" class="empty-state">
+            <td colspan="7" class="empty-state">
               <i class="fas fa-inbox"></i>
               <p>No pages found</p>
             </td>
           </tr>
         {:else}
           {#each filteredPages as page (page.id)}
-            <tr class="table-row" on:click={() => editPage(page)}>
+            <tr class="table-row {selectedPages.includes(page.id) ? 'selected' : ''}">
+              <td class="text-center">
+                <input
+                  type="checkbox"
+                  class="bulk-select-checkbox"
+                  checked={selectedPages.includes(page.id)}
+                  on:change|stopPropagation={() => toggleSelectPage(page.id)}
+                  title="Select {page.name}"
+                />
+              </td>
               <td>
-                <div class="page-name">
+                <div class="page-name" style="cursor: pointer;" on:click={() => editPage(page)}>
                   <i class="fas fa-file"></i>
                   <span>{page.name}</span>
                 </div>
@@ -357,6 +459,17 @@
     cancelText="Cancel"
     onConfirm={confirmDeletePage}
     onCancel={() => showDeleteConfirm = false}
+  />
+
+  <ConfirmModal
+    isOpen={showBulkDeleteConfirm}
+    title="Bulk Delete Pages"
+    message="Are you sure you want to delete {selectedPages.length} page(s)? This action cannot be undone."
+    confirmText="Delete All"
+    cancelText="Cancel"
+    isDestructive={true}
+    onConfirm={confirmBulkDelete}
+    onCancel={() => { showBulkDeleteConfirm = false; }}
   />
 
   <AssetManagerModal
@@ -691,5 +804,43 @@
   .group-tag.active {
     background: var(--color-primary);
     color: white;
+  }
+
+  /* Bulk Operations Styles */
+  .bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .selected-count {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-primary);
+    padding: 0 8px;
+  }
+
+  .btn-danger {
+    background: #ef4444;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background: #dc2626;
+  }
+
+  .bulk-select-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+  }
+
+  .table-row.selected {
+    background: rgba(37, 99, 235, 0.05);
+  }
+
+  .table-row.selected:hover {
+    background: rgba(37, 99, 235, 0.1);
   }
 </style>

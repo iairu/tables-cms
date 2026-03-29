@@ -1,22 +1,30 @@
 <script>
   import { cmsData, saveMovieList } from '../../../stores/cmsData.js';
   import ConfirmModal from '../../ConfirmModal.svelte';
-  
+
   let cmsDataValue;
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
-  
+
   let editingMovie = null;
   let searchQuery = '';
   let showDeleteConfirm = false;
   let movieToDelete = null;
   let showAddForm = false;
   
+  // OMDb API state
+  let showOmdbSearch = false;
+  let omdbSearchQuery = '';
+  let omdbResults = [];
+  let omdbApiKey = '';
+  let omdbLoading = false;
+  let omdbError = '';
+
   const genres = [
     'Action', 'Adventure', 'Animation', 'Comedy', 'Crime',
     'Documentary', 'Drama', 'Family', 'Fantasy', 'Horror',
     'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'Western'
   ];
-  
+
   const defaultMovie = {
     id: '',
     title: '',
@@ -95,6 +103,89 @@
   function updateRating(rating) {
     if (!editingMovie) return;
     editingMovie = { ...editingMovie, rating: Math.max(0, Math.min(10, rating)) };
+  }
+
+  // OMDb API functions
+  async function searchOmdb() {
+    if (!omdbSearchQuery.trim()) return;
+    if (!omdbApiKey) {
+      omdbError = 'Please enter an OMDb API key';
+      return;
+    }
+    
+    omdbLoading = true;
+    omdbError = '';
+    
+    try {
+      const response = await fetch(`https://www.omdbapi.com/?s=${encodeURIComponent(omdbSearchQuery)}&apikey=${omdbApiKey}`);
+      const data = await response.json();
+      
+      if (data.Response === 'True') {
+        omdbResults = data.Search || [];
+      } else {
+        omdbError = data.Error || 'No results found';
+        omdbResults = [];
+      }
+    } catch (err) {
+      omdbError = 'Failed to fetch from OMDb API';
+      console.error('OMDb search error:', err);
+    } finally {
+      omdbLoading = false;
+    }
+  }
+
+  async function importFromOmdb(imdbId) {
+    omdbLoading = true;
+    omdbError = '';
+    
+    try {
+      const response = await fetch(`https://www.omdbapi.com/?i=${imdbId}&apikey=${omdbApiKey}`);
+      const data = await response.json();
+      
+      if (data.Response === 'True') {
+        // Check for duplicate by IMDB ID
+        const existing = (cmsDataValue.movieList || []).find(m => m.imdbId === imdbId);
+        if (existing) {
+          omdbError = 'This movie already exists in your list';
+          omdbLoading = false;
+          return;
+        }
+        
+        // Map OMDb data to our movie format
+        const newMovie = {
+          id: Date.now().toString(),
+          title: data.Title || '',
+          year: parseInt(data.Year) || new Date().getFullYear(),
+          genre: data.Genre ? data.Genre.split(', ')[0] : '',
+          rating: 0,
+          watched: false,
+          notes: '',
+          director: data.Director || '',
+          imdbId: imdbId
+        };
+        
+        saveMovieList([...(cmsDataValue.movieList || []), newMovie]);
+        editingMovie = { ...newMovie };
+        showAddForm = true;
+        showOmdbSearch = false;
+        omdbResults = [];
+        omdbSearchQuery = '';
+      } else {
+        omdbError = data.Error || 'Failed to fetch movie details';
+      }
+    } catch (err) {
+      omdbError = 'Failed to fetch movie details';
+      console.error('OMDb import error:', err);
+    } finally {
+      omdbLoading = false;
+    }
+  }
+
+  function closeOmdbSearch() {
+    showOmdbSearch = false;
+    omdbResults = [];
+    omdbSearchQuery = '';
+    omdbError = '';
   }
 </script>
 
@@ -192,6 +283,9 @@
           placeholder="Search movies..."
           bind:value={searchQuery}
         />
+        <button class="btn-secondary" on:click={() => showOmdbSearch = true}>
+          <i class="fas fa-cloud-download-alt"></i> Import from OMDb
+        </button>
         <button class="btn-primary" on:click={handleAddMovie}>
           <i class="fas fa-plus"></i> Add Movie
         </button>
@@ -252,7 +346,82 @@
       </div>
     {/if}
   {/if}
-  
+
+  <!-- OMDb Search Modal -->
+  {#if showOmdbSearch}
+    <div class="modal-overlay" on:click={closeOmdbSearch}>
+      <div class="modal-content" on:click|stopPropagation>
+        <div class="modal-header">
+          <h3><i class="fas fa-cloud-download-alt"></i> Import from OMDb</h3>
+          <button class="btn-close" on:click={closeOmdbSearch}>
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="form-group">
+            <label><strong>OMDb API Key</strong></label>
+            <input 
+              type="password" 
+              bind:value={omdbApiKey} 
+              placeholder="Enter your OMDb API key"
+            />
+            <small>Get a free API key at <a href="https://www.omdbapi.com/apikey.aspx" target="_blank">omdbapi.com</a></small>
+          </div>
+          
+          <div class="search-bar">
+            <input 
+              type="text" 
+              bind:value={omdbSearchQuery} 
+              placeholder="Search for movies..."
+              on:keydown={(e) => e.key === 'Enter' && searchOmdb()}
+            />
+            <button class="btn-primary" on:click={searchOmdb} disabled={omdbLoading}>
+              <i class="fas fa-search"></i> {omdbLoading ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+          
+          {#if omdbError}
+            <div class="error-message">
+              <i class="fas fa-exclamation-circle"></i> {omdbError}
+            </div>
+          {/if}
+          
+          {#if omdbLoading}
+            <div class="loading-state">
+              <i class="fas fa-spinner fa-spin"></i> Searching OMDb...
+            </div>
+          {/if}
+          
+          {#if omdbResults.length > 0}
+            <div class="omdb-results">
+              {#each omdbResults as result}
+                <div class="result-item">
+                  <img 
+                    src={result.Poster !== 'N/A' ? result.Poster : '/placeholder-poster.jpg'} 
+                    alt={result.Title}
+                    class="result-poster"
+                  />
+                  <div class="result-info">
+                    <h4>{result.Title} ({result.Year})</h4>
+                    <p class="result-type">{result.Type}</p>
+                  </div>
+                  <button 
+                    class="btn-sm btn-success" 
+                    on:click={() => importFromOmdb(result.imdbID)}
+                    disabled={omdbLoading}
+                  >
+                    <i class="fas fa-plus"></i> Import
+                  </button>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      </div>
+    </div>
+  {/if}
+
   <ConfirmModal
     isOpen={showDeleteConfirm}
     title="Delete Movie"
@@ -630,6 +799,205 @@
   }
   
   .empty-state p {
+    color: #64748b;
+  }
+
+  .btn-secondary {
+    background: #64748b;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: #475569;
+  }
+
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  /* OMDb Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f1f5f9;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    color: #64748b;
+  }
+
+  .btn-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #475569;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  .form-group small {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .form-group a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+
+  .form-group a:hover {
+    text-decoration: underline;
+  }
+
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .search-bar input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  .error-message {
+    padding: 12px;
+    background: #fee2e2;
+    border-radius: 6px;
+    color: #dc2626;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .loading-state {
+    padding: 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+  }
+
+  .loading-state i {
+    margin-right: 8px;
+  }
+
+  .omdb-results {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+
+  .result-item:hover {
+    background: #f1f5f9;
+  }
+
+  .result-poster {
+    width: 50px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: #e2e8f0;
+  }
+
+  .result-info {
+    flex: 1;
+  }
+
+  .result-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    color: #0f172a;
+  }
+
+  .result-type {
+    margin: 0;
+    font-size: 12px;
     color: #64748b;
   }
 </style>
