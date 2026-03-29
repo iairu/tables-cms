@@ -129,3 +129,7 @@ add any missing features from TABLES-OLD to TABLES-TAURI
 continue
 
 ---
+
+add any missing details and full vercel deployment integration from TABLES-OLD to TABLES-TAURI
+
+make sure vercel deployment integration is fully working

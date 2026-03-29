@@ -20,7 +20,8 @@
   import ExtensionsSection from './components/cms/sections/ExtensionsSection.svelte';
   import UploadsSection from './components/cms/sections/UploadsSection.svelte';
   import MoviesSection from './components/cms/sections/MoviesSection.svelte';
-  import { cmsData, loadCMSData } from './stores/cmsData.js';
+  import BuildConsole from './components/BuildConsole.svelte';
+  import { cmsData, loadCMSData, triggerBuild } from './stores/cmsData.js';
   import { isLoading, showLoading, hideLoading } from './stores/loading.js';
 
   const isBrowser = typeof window !== 'undefined';
@@ -30,7 +31,8 @@
   let currentSection = 'settings';
   let cmsDataValue;
   let isLoadingValue;
-  
+  let showBuildConsole = false;
+
   const unsubscribeCms = cmsData.subscribe(value => cmsDataValue = value);
   const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
 
@@ -102,19 +104,40 @@
       window.history.pushState({}, '', path);
       currentRoute = path;
       currentSection = getCurrentSection(path);
-      
+
       // Hide loading after a short delay
       setTimeout(() => {
         hideLoading();
       }, 300);
     }
   }
-  
+
   // Handle browser back/forward
   function handlePopState() {
     if (isBrowser) {
       currentRoute = window.location.pathname;
       currentSection = getCurrentSection(currentRoute);
+    }
+  }
+
+  // Build and deploy handlers
+  async function handleBuildLocally() {
+    try {
+      showBuildConsole = true;
+      await triggerBuild(true);
+    } catch (error) {
+      console.error('Build failed:', error);
+      alert('Build failed: ' + error.message);
+    }
+  }
+
+  async function handleBuildAndDeploy() {
+    try {
+      showBuildConsole = true;
+      await triggerBuild(false);
+    } catch (error) {
+      console.error('Deployment failed:', error);
+      alert('Deployment failed: ' + error.message);
     }
   }
   
@@ -172,6 +195,13 @@
     currentSection={currentSection}
     currentRoute={currentRoute}
     onNavigate={navigate}
+    onBuildLocally={handleBuildLocally}
+    onBuildAndDeploy={handleBuildAndDeploy}
+    isBuilding={isLoadingValue}
+    canBuild={cmsDataValue?.canBuild}
+    buildCooldownSeconds={cmsDataValue?.buildCooldownSeconds}
+    domain={cmsDataValue?.settings?.domain}
+    vercelApiKey={cmsDataValue?.settings?.vercelApiKey}
     extensions={cmsDataValue?.extensions}
   >
     {#if currentSection === 'settings'}
@@ -223,6 +253,11 @@
       </div>
     {/if}
   </Layout>
+
+  <BuildConsole
+    isOpen={showBuildConsole}
+    onClose={() => showBuildConsole = false}
+  />
 </main>
 
 <style>

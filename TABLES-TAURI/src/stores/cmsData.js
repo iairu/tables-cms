@@ -620,23 +620,119 @@ function scheduleBuild() {
   }, 3000);
 }
 
-// Build trigger
+// Build trigger using Tauri backend
 export async function triggerBuild(localOnly = false) {
-  cmsData.update(data => ({ ...data, isBuilding: true, canBuild: false }));
-  
-  // In Tauri, we'll trigger build through backend
-  // For now, just simulate
-  console.log('Build triggered', localOnly ? '(local only)' : '');
-  
-  // Simulate build completion
-  setTimeout(() => {
-    cmsData.update(data => ({
-      ...data,
-      isBuilding: false,
-      canBuild: true,
-      lastSaved: Date.now()
-    }));
-  }, 2000);
+  if (isBrowser && window.__TAURI__) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    try {
+      cmsData.update(data => ({ ...data, isBuilding: true, canBuild: false }));
+      
+      if (localOnly) {
+        // Trigger local build only
+        await invoke('trigger_build');
+      } else {
+        // Trigger full deployment
+        const settings = cmsDataValue?.settings || {};
+        const vercelApiKey = settings.vercelApiKey || '';
+        const vercelProjectId = settings.vercelProjectId || '';
+        
+        if (!vercelApiKey) {
+          throw new Error('Vercel API key not configured. Please add it in Settings → Deployment.');
+        }
+        
+        await invoke('trigger_deploy', {
+          vercelApiKey,
+          vercelProjectId
+        });
+      }
+      
+      cmsData.update(data => ({
+        ...data,
+        isBuilding: false,
+        canBuild: true,
+        lastSaved: Date.now()
+      }));
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Build/Deploy failed:', error);
+      cmsData.update(data => ({
+        ...data,
+        isBuilding: false,
+        canBuild: true
+      }));
+      throw error;
+    }
+  } else {
+    // Browser fallback - simulate build
+    console.log('Build triggered (browser mode)', localOnly ? '(local only)' : '');
+    cmsData.update(data => ({ ...data, isBuilding: true, canBuild: false }));
+    
+    setTimeout(() => {
+      cmsData.update(data => ({
+        ...data,
+        isBuilding: false,
+        canBuild: true,
+        lastSaved: Date.now()
+      }));
+    }, 2000);
+    
+    return { success: true };
+  }
+}
+
+// Get deployment status from Tauri backend
+export async function getDeploymentStatus() {
+  if (isBrowser && window.__TAURI__) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    try {
+      return await invoke('get_deployment_status');
+    } catch (error) {
+      console.error('Failed to get deployment status:', error);
+      return null;
+    }
+  }
+  return null;
+}
+
+// Get build logs from Tauri backend
+export async function getBuildLogs() {
+  if (isBrowser && window.__TAURI__) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    try {
+      return await invoke('get_build_logs');
+    } catch (error) {
+      console.error('Failed to get build logs:', error);
+      return [];
+    }
+  }
+  return [];
+}
+
+// Clear build logs
+export async function clearBuildLogs() {
+  if (isBrowser && window.__TAURI__) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    try {
+      await invoke('clear_build_logs');
+    } catch (error) {
+      console.error('Failed to clear build logs:', error);
+    }
+  }
+}
+
+// Trigger Vercel webhook
+export async function triggerVercelWebhook(webhookUrl) {
+  if (isBrowser && window.__TAURI__) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    try {
+      return await invoke('trigger_vercel_webhook', { webhookUrl });
+    } catch (error) {
+      console.error('Failed to trigger webhook:', error);
+      throw error;
+    }
+  }
+  throw new Error('Tauri API not available');
 }
 
 // Collaboration
