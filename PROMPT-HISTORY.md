@@ -102,3 +102,7 @@ add zoom keybinds to tauri
 
 readd deploy button back to header as it is missing with a present vercel api key, show it only if vercel key is present
 
+---
+
+create unit tests for every feature in TABLES-TAURI, identify and implement missing features from TABLES-OLD.app/Contents/Resources project to TABLES-TAURI project
+
