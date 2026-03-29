@@ -38,7 +38,12 @@
     { id: 'blog-list', name: 'Blog List', icon: 'fa-newspaper' },
     { id: 'infobar', name: 'Info Bar', icon: 'fa-info-circle' },
     { id: 'ranking', name: 'Ranking', icon: 'fa-trophy' },
-    { id: 'reviews', name: 'Reviews', icon: 'fa-star' }
+    { id: 'reviews', name: 'Reviews', icon: 'fa-star' },
+    { id: 'flies', name: 'Animated Flies', icon: 'fa-wind' },
+    { id: 'boxes', name: 'Feature Boxes', icon: 'fa-th' },
+    { id: 'slide', name: 'Content Slide', icon: 'fa-layer-group' },
+    { id: 'references', name: 'References', icon: 'fa-quote-left' },
+    { id: 'slideshow', name: 'Image Slideshow', icon: 'fa-images' }
   ];
 
   $: filteredPages = (cmsDataValue?.pages || [])

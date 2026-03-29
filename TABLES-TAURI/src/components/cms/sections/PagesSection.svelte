@@ -20,6 +20,7 @@
   let showAssetManager = false;
   let activeComponentIndex = null;
   let activeField = null;
+  let activeSlideIndex = null;
   let showDeleteConfirm = false;
   let deletePageId = null;
   let showComponentDropdown = false;
@@ -39,7 +40,12 @@
     { id: 'blog-list', name: 'Blog List', icon: 'fa-newspaper' },
     { id: 'infobar', name: 'Info Bar', icon: 'fa-info-circle' },
     { id: 'ranking', name: 'Ranking', icon: 'fa-trophy' },
-    { id: 'reviews', name: 'Reviews', icon: 'fa-star' }
+    { id: 'reviews', name: 'Reviews', icon: 'fa-star' },
+    { id: 'flies', name: 'Animated Flies', icon: 'fa-wind' },
+    { id: 'boxes', name: 'Feature Boxes', icon: 'fa-th' },
+    { id: 'slide', name: 'Content Slide', icon: 'fa-layer-group' },
+    { id: 'references', name: 'References', icon: 'fa-quote-left' },
+    { id: 'slideshow', name: 'Image Slideshow', icon: 'fa-images' }
   ];
 
   // Filtered and sorted pages
@@ -725,7 +731,12 @@
       'blog-list': { title: 'Latest Articles', limit: 6 },
       infobar: { items: [{ icon: 'fas fa-check', text: 'Info item' }] },
       ranking: { title: 'Rankings', items: [{ rank: 1, title: 'First', description: '' }] },
-      reviews: { title: 'Reviews', items: [{ name: 'John Doe', text: 'Great service!', rating: 5 }] }
+      reviews: { title: 'Reviews', items: [{ name: 'John Doe', text: 'Great service!', rating: 5 }] },
+      flies: { flies: [{ text: 'Fly 1', speed: 2, size: 20, color: '#000000' }] },
+      boxes: { boxes: [{ icon: 'fa-star', title: 'Feature Box', description: 'Description', link: '#', linkText: 'Learn More' }] },
+      slide: { title: 'Slide Title', content: 'Slide content', image: '', bgColor: '#ffffff' },
+      references: { references: [{ name: 'John Doe', role: 'CEO', text: 'Great service!', avatar: '' }] },
+      slideshow: { slides: [{ image: '', caption: 'Slide 1' }] }
     };
     return defaults[type] || {};
   }
@@ -765,13 +776,177 @@
   
   function removeFeatureItem(index) {
     if (!editingPage || activeComponentIndex === null) return;
-    
+
     const components = [...editingPage.components];
     const component = { ...components[activeComponentIndex] };
     const items = (component.props.items || []).filter((_, i) => i !== index);
     component.props = { ...component.props, items };
     components[activeComponentIndex] = component;
     editingPage = { ...editingPage, components };
+  }
+
+  // Flies component helpers
+  function addFly(componentIndex) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const flies = [...(component.props.flies || []), { text: 'Fly', speed: 2, size: 20, color: '#000000' }];
+    component.props = { ...component.props, flies };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  function updateFlyProp(componentIndex, flyIndex, prop, value) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const flies = [...(component.props.flies || [])];
+    flies[flyIndex] = { ...flies[flyIndex], [prop]: value };
+    component.props = { ...component.props, flies };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  function removeFly(componentIndex, flyIndex) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const flies = (component.props.flies || []).filter((_, i) => i !== flyIndex);
+    component.props = { ...component.props, flies };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  // Boxes component helpers
+  function addBox(componentIndex) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const boxes = [...(component.props.boxes || []), { icon: 'fa-star', title: 'Feature Box', description: 'Description', link: '#', linkText: 'Learn More' }];
+    component.props = { ...component.props, boxes };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  function updateBoxProp(componentIndex, boxIndex, prop, value) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const boxes = [...(component.props.boxes || [])];
+    boxes[boxIndex] = { ...boxes[boxIndex], [prop]: value };
+    component.props = { ...component.props, boxes };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  function removeBox(componentIndex, boxIndex) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const boxes = (component.props.boxes || []).filter((_, i) => i !== boxIndex);
+    component.props = { ...component.props, boxes };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  // References component helpers
+  function addRef(componentIndex) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const references = [...(component.props.references || []), { name: '', role: '', text: '', avatar: '' }];
+    component.props = { ...component.props, references };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  function updateRefProp(componentIndex, refIndex, prop, value) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const references = [...(component.props.references || [])];
+    references[refIndex] = { ...references[refIndex], [prop]: value };
+    component.props = { ...component.props, references };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  function removeRef(componentIndex, refIndex) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const references = (component.props.references || []).filter((_, i) => i !== refIndex);
+    component.props = { ...component.props, references };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  // Slideshow component helpers
+  function addSlide(componentIndex) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const slides = [...(component.props.slides || []), { image: '', caption: '' }];
+    component.props = { ...component.props, slides };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  function updateSlideProp(componentIndex, slideIndex, prop, value) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const slides = [...(component.props.slides || [])];
+    slides[slideIndex] = { ...slides[slideIndex], [prop]: value };
+    component.props = { ...component.props, slides };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  function removeSlide(componentIndex, slideIndex) {
+    if (!editingPage) return;
+    const components = [...editingPage.components];
+    const component = { ...components[componentIndex] };
+    const slides = (component.props.slides || []).filter((_, i) => i !== slideIndex);
+    component.props = { ...component.props, slides };
+    components[componentIndex] = component;
+    editingPage = { ...editingPage, components };
+  }
+
+  // Override handleOpenAssetManager to handle slideshow slides
+  function handleOpenAssetManager(componentIndex, field, slideIndex = null) {
+    activeComponentIndex = componentIndex;
+    activeField = field;
+    if (slideIndex !== null) {
+      activeSlideIndex = slideIndex;
+    }
+    showAssetManager = true;
+  }
+
+  // Override handleAssetSelect to handle slideshow slides
+  function handleAssetSelect(asset) {
+    if (!editingPage || activeComponentIndex === null || !activeField) return;
+
+    const components = [...editingPage.components];
+    const component = { ...components[activeComponentIndex] };
+    
+    if (activeField === 'slides' && activeSlideIndex !== null) {
+      // Handle slideshow slide image
+      const slides = [...(component.props.slides || [])];
+      slides[activeSlideIndex] = { ...slides[activeSlideIndex], image: asset.url || asset };
+      component.props = { ...component.props, slides };
+    } else {
+      // Handle regular field
+      component.props = {
+        ...component.props,
+        [activeField]: asset.url || asset
+      };
+    }
+
+    components[activeComponentIndex] = component;
+    editingPage = { ...editingPage, components };
+    showAssetManager = false;
+    activeSlideIndex = null;
   }
 </script>
 
@@ -1055,6 +1230,96 @@
                         <div class="prop-row">
                           <label>Link</label>
                           <input type="text" bind:value={component.props.link} on:input={(e) => updateComponentProp(index, 'link', e.target.value)} />
+                        </div>
+                      {:else if component.type === 'flies'}
+                        <div class="prop-row full">
+                          <label>Flies Configuration</label>
+                          <p class="help-text">Add animated flies that float around the screen</p>
+                          <div class="flies-editor">
+                            {#each component.props.flies || [] as fly, flyIndex}
+                              <div class="fly-editor-item">
+                                <input type="text" bind:value={fly.text} on:input={(e) => updateFlyProp(index, flyIndex, 'text', e.target.value)} placeholder="Text" />
+                                <input type="number" bind:value={fly.speed} on:input={(e) => updateFlyProp(index, flyIndex, 'speed', parseInt(e.target.value))} placeholder="Speed (1-10)" min="1" max="10" />
+                                <input type="number" bind:value={fly.size} on:input={(e) => updateFlyProp(index, flyIndex, 'size', parseInt(e.target.value))} placeholder="Size" min="10" max="100" />
+                                <input type="color" bind:value={fly.color} on:input={(e) => updateFlyProp(index, flyIndex, 'color', e.target.value)} />
+                                <button class="btn-icon btn-danger btn-xs" on:click={() => removeFly(index, flyIndex)}><i class="fas fa-trash"></i></button>
+                              </div>
+                            {/each}
+                            <button class="btn-secondary btn-sm" on:click={() => addFly(index)}><i class="fas fa-plus"></i> Add Fly</button>
+                          </div>
+                        </div>
+                      {:else if component.type === 'boxes'}
+                        <div class="prop-row full">
+                          <label>Feature Boxes</label>
+                          <p class="help-text">Add feature boxes with icons and descriptions</p>
+                          <div class="boxes-editor">
+                            {#each component.props.boxes || [] as box, boxIndex}
+                              <div class="box-editor-item">
+                                <input type="text" bind:value={box.icon} on:input={(e) => updateBoxProp(index, boxIndex, 'icon', e.target.value)} placeholder="FontAwesome icon (e.g., fa-star)" />
+                                <input type="text" bind:value={box.title} on:input={(e) => updateBoxProp(index, boxIndex, 'title', e.target.value)} placeholder="Box title" />
+                                <textarea bind:value={box.description} on:input={(e) => updateBoxProp(index, boxIndex, 'description', e.target.value)} placeholder="Description" rows="2"></textarea>
+                                <input type="text" bind:value={box.link} on:input={(e) => updateBoxProp(index, boxIndex, 'link', e.target.value)} placeholder="Link URL" />
+                                <input type="text" bind:value={box.linkText} on:input={(e) => updateBoxProp(index, boxIndex, 'linkText', e.target.value)} placeholder="Link text" />
+                                <button class="btn-icon btn-danger btn-xs" on:click={() => removeBox(index, boxIndex)}><i class="fas fa-trash"></i></button>
+                              </div>
+                            {/each}
+                            <button class="btn-secondary btn-sm" on:click={() => addBox(index)}><i class="fas fa-plus"></i> Add Box</button>
+                          </div>
+                        </div>
+                      {:else if component.type === 'slide'}
+                        <div class="prop-row">
+                          <label>Title</label>
+                          <input type="text" bind:value={component.props.title} on:input={(e) => updateComponentProp(index, 'title', e.target.value)} />
+                        </div>
+                        <div class="prop-row">
+                          <label>Content</label>
+                          <textarea bind:value={component.props.content} on:input={(e) => updateComponentProp(index, 'content', e.target.value)} rows="4"></textarea>
+                        </div>
+                        <div class="prop-row">
+                          <label>Image</label>
+                          <div class="input-with-button">
+                            <input type="text" bind:value={component.props.image} readonly placeholder="Select image..." />
+                            <button class="btn-secondary btn-sm" on:click={() => handleOpenAssetManager(index, 'image')}><i class="fas fa-upload"></i></button>
+                          </div>
+                        </div>
+                        <div class="prop-row">
+                          <label>Background Color</label>
+                          <input type="color" bind:value={component.props.bgColor} on:input={(e) => updateComponentProp(index, 'bgColor', e.target.value)} />
+                        </div>
+                      {:else if component.type === 'references'}
+                        <div class="prop-row full">
+                          <label>References</label>
+                          <p class="help-text">Add testimonial or reference cards</p>
+                          <div class="references-editor">
+                            {#each component.props.references || [] as ref, refIndex}
+                              <div class="reference-editor-item">
+                                <input type="text" bind:value={ref.name} on:input={(e) => updateRefProp(index, refIndex, 'name', e.target.value)} placeholder="Person name" />
+                                <input type="text" bind:value={ref.role} on:input={(e) => updateRefProp(index, refIndex, 'role', e.target.value)} placeholder="Role/Title" />
+                                <textarea bind:value={ref.text} on:input={(e) => updateRefProp(index, refIndex, 'text', e.target.value)} placeholder="Testimonial text" rows="3"></textarea>
+                                <input type="text" bind:value={ref.avatar} on:input={(e) => updateRefProp(index, refIndex, 'avatar', e.target.value)} placeholder="Avatar image URL" />
+                                <button class="btn-icon btn-danger btn-xs" on:click={() => removeRef(index, refIndex)}><i class="fas fa-trash"></i></button>
+                              </div>
+                            {/each}
+                            <button class="btn-secondary btn-sm" on:click={() => addRef(index)}><i class="fas fa-plus"></i> Add Reference</button>
+                          </div>
+                        </div>
+                      {:else if component.type === 'slideshow'}
+                        <div class="prop-row full">
+                          <label>Slideshow Images</label>
+                          <p class="help-text">Add images to the slideshow</p>
+                          <div class="slideshow-editor">
+                            {#each component.props.slides || [] as slide, slideIndex}
+                              <div class="slide-editor-item">
+                                <div class="input-with-button">
+                                  <input type="text" bind:value={slide.image} readonly placeholder="Image URL" />
+                                  <button class="btn-secondary btn-sm" on:click={() => handleOpenAssetManager(index, 'slides', slideIndex)}><i class="fas fa-upload"></i></button>
+                                </div>
+                                <input type="text" bind:value={slide.caption} on:input={(e) => updateSlideProp(index, slideIndex, 'caption', e.target.value)} placeholder="Caption" />
+                                <button class="btn-icon btn-danger btn-xs" on:click={() => removeSlide(index, slideIndex)}><i class="fas fa-trash"></i></button>
+                              </div>
+                            {/each}
+                            <button class="btn-secondary btn-sm" on:click={() => addSlide(index)}><i class="fas fa-plus"></i> Add Slide</button>
+                          </div>
                         </div>
                       {:else}
                         <div class="prop-row full">
