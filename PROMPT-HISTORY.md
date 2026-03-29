@@ -109,3 +109,7 @@ create unit tests for every feature in TABLES-TAURI, identify and implement miss
 work on making the TABLES-TAURI project more robust, introduce auto-save always on as long as project has been saved manually at least once, improve css themes especially border colors in all themes, implement all missing features from TABLES-OLD
 
 continue with remaining features
+
+make the blog and pages view look like a single table with filtering options, make css more compact overall
+
+continue with remaining features, add missing tests

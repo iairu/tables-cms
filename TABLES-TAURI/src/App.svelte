@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import Layout from './components/Layout.svelte';
   import SettingsSection from './components/cms/sections/SettingsSection.svelte';
-  import PagesSection from './components/cms/sections/PagesSection.svelte';
+  import PagesSectionCompact from './components/cms/sections/PagesSectionCompact.svelte';
   import PageGroupsSection from './components/cms/sections/PageGroupsSection.svelte';
   import BlogSection from './components/cms/sections/BlogSection.svelte';
   import CatsSection from './components/cms/sections/CatsSection.svelte';
@@ -171,7 +171,7 @@
     {#if currentSection === 'settings'}
       <SettingsSection />
     {:else if currentSection === 'pages'}
-      <PagesSection />
+      <PagesSectionCompact />
     {:else if currentSection === 'page-groups'}
       <PageGroupsSection />
     {:else if currentSection === 'blog'}

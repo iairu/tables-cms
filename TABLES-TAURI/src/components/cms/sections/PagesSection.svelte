@@ -1,12 +1,20 @@
 <script>
-  import { cmsData, savePages, saveComponentRows } from '../../../stores/cmsData.js';
+  import { cmsData, savePages, savePageWithHistory } from '../../../stores/cmsData.js';
   import AssetManagerModal from '../AssetManagerModal.svelte';
   import ConfirmModal from '../../ConfirmModal.svelte';
+  import HistoryPanel from '../HistoryPanel.svelte';
 
   let cmsDataValue;
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
 
+  // Search and filter state
   let searchQuery = '';
+  let filterGroup = 'all';
+  let filterStatus = 'all';
+  let sortBy = 'updatedAt';
+  let sortDirection = 'desc';
+
+  // UI state
   let isEditingPage = false;
   let editingPage = null;
   let showAssetManager = false;
@@ -15,32 +23,55 @@
   let showDeleteConfirm = false;
   let deletePageId = null;
   let showComponentDropdown = false;
-  let isSaving = false;
-  let lastSaved = null;
-  let saveError = null;
   let showGroupDropdown = false;
   let showPreview = false;
+  let showHistory = false;
+  let selectedPageForHistory = null;
 
   // Available component types
   const componentTypes = [
-    { id: 'hero', name: 'Hero Section', icon: 'fa-image', description: 'Large header with title, subtitle, and CTA' },
-    { id: 'text', name: 'Text Block', icon: 'fa-paragraph', description: 'Rich text content area' },
-    { id: 'image', name: 'Image', icon: 'fa-image', description: 'Single image with optional caption' },
-    { id: 'video', name: 'Video', icon: 'fa-video', description: 'Embedded video (YouTube, Vimeo)' },
-    { id: 'features', name: 'Features Grid', icon: 'fa-th-large', description: 'Grid of feature cards with icons' },
-    { id: 'cta', name: 'Call to Action', icon: 'fa-bullhorn', description: 'Prominent CTA section' },
-    { id: 'blog-list', name: 'Blog List', icon: 'fa-newspaper', description: 'List of recent blog articles' },
-    { id: 'infobar', name: 'Info Bar', icon: 'fa-info-circle', description: 'Horizontal information bar' },
-    { id: 'ranking', name: 'Ranking', icon: 'fa-trophy', description: 'Ranked list or comparison' },
-    { id: 'reviews', name: 'Reviews', icon: 'fa-star', description: 'Customer testimonials' }
+    { id: 'hero', name: 'Hero Section', icon: 'fa-image' },
+    { id: 'text', name: 'Text Block', icon: 'fa-paragraph' },
+    { id: 'image', name: 'Image', icon: 'fa-image' },
+    { id: 'video', name: 'Video', icon: 'fa-video' },
+    { id: 'features', name: 'Features Grid', icon: 'fa-th-large' },
+    { id: 'cta', name: 'Call to Action', icon: 'fa-bullhorn' },
+    { id: 'blog-list', name: 'Blog List', icon: 'fa-newspaper' },
+    { id: 'infobar', name: 'Info Bar', icon: 'fa-info-circle' },
+    { id: 'ranking', name: 'Ranking', icon: 'fa-trophy' },
+    { id: 'reviews', name: 'Reviews', icon: 'fa-star' }
   ];
-  
-  $: filteredPages = cmsDataValue?.pages?.filter(page =>
-    !searchQuery ||
-    page.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    page.slug?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
-  
+
+  // Filtered and sorted pages
+  $: filteredPages = (cmsDataValue?.pages || [])
+    .filter(page => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        if (!page.name?.toLowerCase().includes(query) &&
+            !page.slug?.toLowerCase().includes(query)) {
+          return false;
+        }
+      }
+      // Group filter
+      if (filterGroup !== 'all') {
+        if (filterGroup === 'none') {
+          if (page.groups && page.groups.length > 0) return false;
+        } else {
+          if (!page.groups || !page.groups.includes(filterGroup)) return false;
+        }
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const aVal = a[sortBy] || 0;
+      const bVal = b[sortBy] || 0;
+      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+
+  $: availableGroups = cmsDataValue?.pageGroups || [];
+  $: assignedGroupIds = editingPage?.groups || [];
+
   function handleNewPage() {
     const newPage = {
       id: Date.now().toString(),
@@ -50,11 +81,9 @@
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
-
-    savePages([...(cmsDataValue.pages || []), newPage]);
+    savePageWithHistory(newPage, 'create', 'Created new page');
     editingPage = { ...newPage };
     isEditingPage = true;
-    selectedPage = null;
   }
 
   function requestDeletePage(pageId) {
@@ -65,6 +94,8 @@
   function confirmDeletePage() {
     showDeleteConfirm = false;
     if (deletePageId) {
+      const page = cmsDataValue.pages.find(p => p.id === deletePageId);
+      savePageWithHistory(page, 'delete', 'Deleted page');
       savePages((cmsDataValue.pages || []).filter(p => p.id !== deletePageId));
       if (editingPage?.id === deletePageId) {
         editingPage = null;
@@ -79,23 +110,87 @@
     deletePageId = null;
   }
 
-  // Get available page groups
-  $: availableGroups = cmsDataValue?.pageGroups || [];
-
-  // Get groups assigned to current editing page
-  $: assignedGroupIds = editingPage?.groups || [];
-  
-  // Check if a group is assigned to the current page
-  function isGroupAssigned(groupId) {
-    return assignedGroupIds.includes(groupId);
+  function editPage(page) {
+    editingPage = { ...page };
+    isEditingPage = true;
   }
-  
-  // Toggle group assignment for current page
+
+  function savePage() {
+    if (!editingPage.name || !editingPage.slug) return;
+    editingPage.updatedAt = Date.now();
+    savePageWithHistory(editingPage, 'update', 'Updated page');
+    const existingIndex = cmsDataValue.pages.findIndex(p => p.id === editingPage.id);
+    const updatedPages = [...cmsDataValue.pages];
+    if (existingIndex >= 0) {
+      updatedPages[existingIndex] = editingPage;
+    } else {
+      updatedPages.push(editingPage);
+    }
+    savePages(updatedPages);
+    isEditingPage = false;
+    editingPage = null;
+  }
+
+  function cancelEdit() {
+    isEditingPage = false;
+    editingPage = null;
+  }
+
   function toggleGroupAssignment(groupId) {
     if (!editingPage) return;
-    
     const currentGroups = editingPage.groups || [];
     let newGroups;
+    if (currentGroups.includes(groupId)) {
+      newGroups = currentGroups.filter(id => id !== groupId);
+    } else {
+      newGroups = [...currentGroups, groupId];
+    }
+    editingPage = { ...editingPage, groups: newGroups };
+  }
+
+  function getGroupName(groupId) {
+    const group = availableGroups.find(g => g.id === groupId);
+    return group ? group.name : groupId;
+  }
+
+  function formatDate(timestamp) {
+    if (!timestamp) return '-';
+    return new Date(timestamp).toLocaleDateString();
+  }
+
+  function formatDateTime(timestamp) {
+    if (!timestamp) return '-';
+    return new Date(timestamp).toLocaleString();
+  }
+
+  function getComponentCount(page) {
+    return page.components ? page.components.length : 0;
+  }
+
+  function viewHistory(page) {
+    selectedPageForHistory = page;
+    showHistory = true;
+  }
+
+  function closeHistory() {
+    showHistory = false;
+    selectedPageForHistory = null;
+  }
+
+  function handleSort(field) {
+    if (sortBy === field) {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortBy = field;
+      sortDirection = 'asc';
+    }
+  }
+
+  function getSortIcon(field) {
+    if (sortBy !== field) return 'fa-sort';
+    return sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+  }
+</script>
     
     if (currentGroups.includes(groupId)) {
       // Remove from group
