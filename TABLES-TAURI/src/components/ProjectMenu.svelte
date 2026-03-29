@@ -1,5 +1,5 @@
 <script>
-  import { currentProject, isProjectOpen, recentProjects, openProject, saveProject, closeProject, openRecentProject } from '../stores/projectManager.js';
+  import { currentProject, isProjectOpen, recentProjects, openProject, saveProject, closeProject, openRecentProject, clearRecentProjects } from '../stores/projectManager.js';
   
   let currentProjectValue;
   const unsubscribeCurrent = currentProject.subscribe(value => currentProjectValue = value);
