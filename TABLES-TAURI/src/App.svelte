@@ -7,6 +7,10 @@
   import BlogSection from './components/cms/sections/BlogSection.svelte';
   import CatsSection from './components/cms/sections/CatsSection.svelte';
   import PersonalSection from './components/cms/sections/PersonalSection.svelte';
+  import BiometricSection from './components/cms/sections/BiometricSection.svelte';
+  import MedicalSection from './components/cms/sections/MedicalSection.svelte';
+  import FinancialSection from './components/cms/sections/FinancialSection.svelte';
+  import LegalSection from './components/cms/sections/LegalSection.svelte';
   import ACLSection from './components/cms/sections/ACLSection.svelte';
   import RentalInventorySection from './components/cms/sections/RentalInventorySection.svelte';
   import RentalAttendanceSection from './components/cms/sections/RentalAttendanceSection.svelte';
@@ -182,6 +186,14 @@
       <CatsSection />
     {:else if currentSection === 'personal'}
       <PersonalSection />
+    {:else if currentSection === 'biometric'}
+      <BiometricSection />
+    {:else if currentSection === 'medical'}
+      <MedicalSection />
+    {:else if currentSection === 'financial'}
+      <FinancialSection />
+    {:else if currentSection === 'legal'}
+      <LegalSection />
     {:else if currentSection === 'acl'}
       <ACLSection />
     {:else if currentSection === 'rental-inventory'}

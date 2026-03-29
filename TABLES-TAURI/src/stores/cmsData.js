@@ -12,6 +12,10 @@ export const cmsData = writable({
   blogArticles: [],
   catRows: [],
   userRows: [],
+  biometricRows: [],
+  medicalRows: [],
+  financialRows: [],
+  legalRows: [],
   inventoryRows: [],
   customerRows: [],
   employeeRows: [],
@@ -96,8 +100,8 @@ export async function loadCMSData() {
   try {
     const [
       pages, pageGroups, blogArticles,
-      catRows, userRows, inventoryRows,
-      customerRows, employeeRows, attendanceRows,
+      catRows, userRows, biometricRows, medicalRows, financialRows, legalRows,
+      inventoryRows, customerRows, employeeRows, attendanceRows,
       reservationRows, componentRows, movieList,
       settings, acl, extensions
     ] = await Promise.all([
@@ -106,6 +110,10 @@ export async function loadCMSData() {
       loadJSON(`/cms/blogArticles.json?t=${t}`, []),
       loadJSON(`/cms/catRows.json?t=${t}`, []),
       loadJSON(`/cms/userRows.json?t=${t}`, []),
+      loadJSON(`/cms/biometricRows.json?t=${t}`, []),
+      loadJSON(`/cms/medicalRows.json?t=${t}`, []),
+      loadJSON(`/cms/financialRows.json?t=${t}`, []),
+      loadJSON(`/cms/legalRows.json?t=${t}`, []),
       loadJSON(`/cms/inventoryRows.json?t=${t}`, []),
       loadJSON(`/cms/customerRows.json?t=${t}`, []),
       loadJSON(`/cms/employeeRows.json?t=${t}`, []),
@@ -144,6 +152,10 @@ export async function loadCMSData() {
       blogArticles: blogArticles || [],
       catRows: catRows || [],
       userRows: userRows || [],
+      biometricRows: biometricRows || [],
+      medicalRows: medicalRows || [],
+      financialRows: financialRows || [],
+      legalRows: legalRows || [],
       inventoryRows: inventoryRows || [],
       customerRows: customerRows || [],
       employeeRows: employeeRows || [],
@@ -292,6 +304,54 @@ export function saveUserRows(rows, skipBroadcast = false) {
   saveToStorage('userRows', rows);
   scheduleBuild();
   scheduleAutoSave(); // Trigger auto-save
+}
+
+export function saveBiometricRows(rows, skipBroadcast = false) {
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('biometricRows', rows);
+    }
+    return { ...data, biometricRows: rows };
+  });
+  saveToStorage('biometricRows', rows);
+  scheduleBuild();
+  scheduleAutoSave();
+}
+
+export function saveMedicalRows(rows, skipBroadcast = false) {
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('medicalRows', rows);
+    }
+    return { ...data, medicalRows: rows };
+  });
+  saveToStorage('medicalRows', rows);
+  scheduleBuild();
+  scheduleAutoSave();
+}
+
+export function saveFinancialRows(rows, skipBroadcast = false) {
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('financialRows', rows);
+    }
+    return { ...data, financialRows: rows };
+  });
+  saveToStorage('financialRows', rows);
+  scheduleBuild();
+  scheduleAutoSave();
+}
+
+export function saveLegalRows(rows, skipBroadcast = false) {
+  cmsData.update(data => {
+    if (!skipBroadcast && data.collabState?.isConnected) {
+      broadcastDataUpdate('legalRows', rows);
+    }
+    return { ...data, legalRows: rows };
+  });
+  saveToStorage('legalRows', rows);
+  scheduleBuild();
+  scheduleAutoSave();
 }
 
 export function saveInventoryRows(rows, skipBroadcast = false) {
