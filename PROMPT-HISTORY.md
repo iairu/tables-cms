@@ -113,3 +113,7 @@ continue with remaining features
 make the blog and pages view look like a single table with filtering options, make css more compact overall
 
 continue with remaining features, add missing tests
+
+---
+
+work on making the TABLES-TAURI project more robust, add any missing features from TABLES-OLD to TABLES-TAURI, add missing tests

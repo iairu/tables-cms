@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  savePageHistory,
-  saveBlogHistory,
-  deleteHistoryEntry,
-  clearHistory
-} from './cmsData.js';
+
+// Import the actual functions to test they exist
+import * as cmsDataModule from './cmsData.js';
 
 describe('History System - Core Functions', () => {
   beforeEach(() => {
@@ -14,48 +11,48 @@ describe('History System - Core Functions', () => {
 
   describe('savePageHistory', () => {
     it('should be a function', () => {
-      expect(typeof savePageHistory).toBe('function');
+      expect(typeof cmsDataModule.savePageHistory).toBe('function');
     });
 
     it('should not throw when called', () => {
       expect(() => {
-        savePageHistory('page1', 'create', { id: 'page1' }, 'Test');
+        cmsDataModule.savePageHistory('page1', 'create', { id: 'page1' }, 'Test');
       }).not.toThrow();
     });
   });
 
   describe('saveBlogHistory', () => {
     it('should be a function', () => {
-      expect(typeof saveBlogHistory).toBe('function');
+      expect(typeof cmsDataModule.saveBlogHistory).toBe('function');
     });
 
     it('should not throw when called', () => {
       expect(() => {
-        saveBlogHistory('article1', 'create', { id: 'article1' }, 'Test');
+        cmsDataModule.saveBlogHistory('article1', 'create', { id: 'article1' }, 'Test');
       }).not.toThrow();
     });
   });
 
   describe('deleteHistoryEntry', () => {
     it('should be a function', () => {
-      expect(typeof deleteHistoryEntry).toBe('function');
+      expect(typeof cmsDataModule.deleteHistoryEntry).toBe('function');
     });
 
     it('should not throw when called', () => {
       expect(() => {
-        deleteHistoryEntry('test-id', 'page');
+        cmsDataModule.deleteHistoryEntry('test-id', 'page');
       }).not.toThrow();
     });
   });
 
   describe('clearHistory', () => {
     it('should be a function', () => {
-      expect(typeof clearHistory).toBe('function');
+      expect(typeof cmsDataModule.clearHistory).toBe('function');
     });
 
     it('should not throw when called', () => {
       expect(() => {
-        clearHistory('page');
+        cmsDataModule.clearHistory('page');
       }).not.toThrow();
     });
   });
@@ -63,13 +60,13 @@ describe('History System - Core Functions', () => {
   describe('History Entry Structure', () => {
     it('should accept required parameters', () => {
       expect(() => {
-        savePageHistory('page1', 'create', { id: 'page1' });
+        cmsDataModule.savePageHistory('page1', 'create', { id: 'page1' });
       }).not.toThrow();
     });
 
     it('should work with optional label', () => {
       expect(() => {
-        savePageHistory('page1', 'update', { id: 'page1' }, 'Custom label');
+        cmsDataModule.savePageHistory('page1', 'update', { id: 'page1' }, 'Custom label');
       }).not.toThrow();
     });
   });
@@ -77,13 +74,13 @@ describe('History System - Core Functions', () => {
   describe('Error Handling', () => {
     it('should handle null data gracefully', () => {
       expect(() => {
-        savePageHistory('page1', 'create', null);
+        cmsDataModule.savePageHistory('page1', 'create', null);
       }).not.toThrow();
     });
 
     it('should handle empty string label', () => {
       expect(() => {
-        savePageHistory('page1', 'create', { id: 'page1' }, '');
+        cmsDataModule.savePageHistory('page1', 'create', { id: 'page1' }, '');
       }).not.toThrow();
     });
   });

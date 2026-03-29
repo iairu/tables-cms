@@ -7,6 +7,7 @@
   import BlogSection from './components/cms/sections/BlogSection.svelte';
   import CatsSection from './components/cms/sections/CatsSection.svelte';
   import PersonalSection from './components/cms/sections/PersonalSection.svelte';
+  import ACLSection from './components/cms/sections/ACLSection.svelte';
   import RentalInventorySection from './components/cms/sections/RentalInventorySection.svelte';
   import RentalAttendanceSection from './components/cms/sections/RentalAttendanceSection.svelte';
   import RentalCustomersSection from './components/cms/sections/RentalCustomersSection.svelte';
@@ -73,6 +74,7 @@
     if (path.startsWith('/cms/blog')) return sections['blog'] ? 'blog' : 'settings';
     if (path.startsWith('/cms/pedigree')) return sections['cats'] ? 'cats' : 'settings';
     if (path.startsWith('/cms/personal')) return sections['personal'] ? 'personal' : 'settings';
+    if (path.startsWith('/cms/acl')) return 'acl';
     if (path.startsWith('/cms/inventory')) return sections['rental-inventory'] ? 'rental-inventory' : 'settings';
     if (path.startsWith('/cms/attendance')) return sections['rental-attendance'] ? 'rental-attendance' : 'settings';
     if (path.startsWith('/cms/customers')) return sections['rental-customers'] ? 'rental-customers' : 'settings';
@@ -180,6 +182,8 @@
       <CatsSection />
     {:else if currentSection === 'personal'}
       <PersonalSection />
+    {:else if currentSection === 'acl'}
+      <ACLSection />
     {:else if currentSection === 'rental-inventory'}
       <RentalInventorySection />
     {:else if currentSection === 'rental-attendance'}

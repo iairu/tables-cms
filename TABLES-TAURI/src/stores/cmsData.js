@@ -393,10 +393,11 @@ export function savePageHistory(pageId, action, data, label = '') {
   cmsData.update(state => {
     const existingHistory = state.pageHistory || [];
     const updatedHistory = [historyEntry, ...existingHistory].slice(0, 100); // Keep last 100 entries
+    // Save to storage using the updated state
+    saveToStorage('pageHistory', updatedHistory);
     return { ...state, pageHistory: updatedHistory };
   });
 
-  saveToStorage('pageHistory', cmsDataValue?.pageHistory || []);
   scheduleAutoSave();
 }
 
@@ -415,10 +416,11 @@ export function saveBlogHistory(articleId, action, data, label = '') {
   cmsData.update(state => {
     const existingHistory = state.blogHistory || [];
     const updatedHistory = [historyEntry, ...existingHistory].slice(0, 100); // Keep last 100 entries
+    // Save to storage using the updated state
+    saveToStorage('blogHistory', updatedHistory);
     return { ...state, blogHistory: updatedHistory };
   });
 
-  saveToStorage('blogHistory', cmsDataValue?.blogHistory || []);
   scheduleAutoSave();
 }
 
@@ -463,24 +465,22 @@ export function rollbackBlog(articleId, historyEntry) {
 export function deleteHistoryEntry(historyId, type) {
   cmsData.update(state => {
     if (type === 'page') {
+      const updatedHistory = (state.pageHistory || []).filter(h => h.id !== historyId);
+      saveToStorage('pageHistory', updatedHistory);
       return {
         ...state,
-        pageHistory: (state.pageHistory || []).filter(h => h.id !== historyId)
+        pageHistory: updatedHistory
       };
     } else if (type === 'blog') {
+      const updatedHistory = (state.blogHistory || []).filter(h => h.id !== historyId);
+      saveToStorage('blogHistory', updatedHistory);
       return {
         ...state,
-        blogHistory: (state.blogHistory || []).filter(h => h.id !== historyId)
+        blogHistory: updatedHistory
       };
     }
     return state;
   });
-
-  if (type === 'page') {
-    saveToStorage('pageHistory', cmsDataValue?.pageHistory || []);
-  } else if (type === 'blog') {
-    saveToStorage('blogHistory', cmsDataValue?.blogHistory || []);
-  }
 }
 
 export function clearHistory(type) {

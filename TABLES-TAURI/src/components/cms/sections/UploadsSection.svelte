@@ -2,6 +2,7 @@
   import { cmsData, uploadFile, deleteUpload, loadUploads } from '../../../stores/cmsData.js';
   import { onMount } from 'svelte';
   import ConfirmModal from '../../ConfirmModal.svelte';
+  import Fuse from 'fuse.js';
 
   let cmsDataValue;
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
@@ -10,10 +11,39 @@
   let deleteItemId = null;
   let showPreview = false;
   let previewItem = null;
+  let searchQuery = '';
+  let selectedFiles = new Set();
+  let showBulkDeleteConfirm = false;
+  let isReplacing = false;
+  let replaceItemId = null;
+  let showImportExport = false;
+
+  // Fuse.js instance for fuzzy search
+  let fuse;
 
   onMount(() => {
     loadUploads();
   });
+
+  // Initialize Fuse.js when uploads change
+  $: if (cmsDataValue?.uploads) {
+    fuse = new Fuse(cmsDataValue.uploads, {
+      keys: ['name', 'mime_type'],
+      threshold: 0.3,
+      includeScore: true
+    });
+  }
+
+  // Filter uploads based on search
+  function getFilteredUploads() {
+    if (!cmsDataValue?.uploads) return [];
+    if (!searchQuery.trim()) return cmsDataValue.uploads;
+    
+    const results = fuse.search(searchQuery);
+    return results.map(result => result.item);
+  }
+
+  const filteredUploads = getFilteredUploads();
 
   async function handleFileUpload(event) {
     const file = event.target.files[0];
@@ -22,6 +52,20 @@
     isUploading = true;
     await uploadFile(file);
     isUploading = false;
+    event.target.value = '';
+  }
+
+  async function handleReplaceFile(event) {
+    const file = event.target.files[0];
+    if (!file || !replaceItemId) return;
+
+    isReplacing = true;
+    // Delete old file first
+    await deleteUpload(replaceItemId);
+    // Upload new file
+    await uploadFile(file);
+    isReplacing = false;
+    replaceItemId = null;
     event.target.value = '';
   }
 
@@ -41,6 +85,54 @@
   function cancelDelete() {
     showDeleteConfirm = false;
     deleteItemId = null;
+  }
+
+  function requestReplace(id) {
+    replaceItemId = id;
+    // Trigger file input
+    const input = document.getElementById('replace-file-input');
+    if (input) input.click();
+  }
+
+  function toggleSelect(id) {
+    if (selectedFiles.has(id)) {
+      selectedFiles.delete(id);
+    } else {
+      selectedFiles.add(id);
+    }
+  }
+
+  function selectAll() {
+    filteredUploads.forEach(upload => selectedFiles.add(upload.id));
+  }
+
+  function deselectAll() {
+    selectedFiles.clear();
+  }
+
+  function requestBulkDelete() {
+    showBulkDeleteConfirm = true;
+  }
+
+  async function confirmBulkDelete() {
+    showBulkDeleteConfirm = false;
+    for (const id of selectedFiles) {
+      await deleteUpload(id);
+    }
+    selectedFiles.clear();
+  }
+
+  function cancelBulkDelete() {
+    showBulkDeleteConfirm = false;
+  }
+
+  async function purgeAllUploads() {
+    if (!confirm('Are you sure you want to delete ALL uploads? This action cannot be undone.')) {
+      return;
+    }
+    for (const upload of cmsDataValue.uploads) {
+      await deleteUpload(upload.id);
+    }
   }
 
   function openPreview(upload) {
@@ -86,21 +178,104 @@
     }
     return `file://${upload.path}`;
   }
+
+  function exportUploads() {
+    const dataStr = JSON.stringify(cmsDataValue.uploads, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `uploads-export-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importUploads(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (!Array.isArray(imported)) {
+          alert('Invalid uploads file format');
+          return;
+        }
+        // Note: This would need backend support to actually import files
+        alert('Import functionality requires backend support. Export/Import is metadata only.');
+      } catch (error) {
+        alert('Failed to parse uploads file: ' + error.message);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
 </script>
 
 <div class="uploads-section">
   <div class="section-header">
     <h2><i class="fas fa-upload"></i> Uploads</h2>
-    <label class="btn-primary">
-      <i class="fas fa-plus"></i> Upload File
+    <div class="header-actions">
       <input
-        type="file"
-        style="display: none"
-        accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
-        on:change={handleFileUpload}
+        type="text"
+        class="search-input"
+        placeholder="Search files..."
+        bind:value={searchQuery}
       />
-    </label>
+      <div class="bulk-actions" style:display={selectedFiles.size > 0 ? 'flex' : 'none'}>
+        <span class="selected-count">{selectedFiles.size} selected</span>
+        <button class="btn-secondary" on:click={deselectAll}>
+          <i class="fas fa-times"></i>
+          Deselect All
+        </button>
+        <button class="btn-danger" on:click={requestBulkDelete}>
+          <i class="fas fa-trash"></i>
+          Delete Selected
+        </button>
+      </div>
+      <label class="btn-secondary">
+        <i class="fas fa-upload"></i> Upload File
+        <input
+          type="file"
+          style="display: none"
+          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+          on:change={handleFileUpload}
+        />
+      </label>
+      <button class="btn-secondary" on:click={selectAll}>
+        <i class="fas fa-check-square"></i>
+        Select All
+      </button>
+      <button class="btn-secondary" on:click={exportUploads}>
+        <i class="fas fa-download"></i>
+        Export
+      </button>
+      <label class="btn-secondary">
+        <i class="fas fa-upload"></i>
+        Import
+        <input
+          type="file"
+          style="display: none"
+          accept=".json"
+          on:change={importUploads}
+        />
+      </label>
+      <button class="btn-danger" on:click={purgeAllUploads} title="Purge all uploads">
+        <i class="fas fa-trash-alt"></i>
+        Purge All
+      </button>
+    </div>
   </div>
+
+  <!-- Hidden file input for replace -->
+  <input
+    id="replace-file-input"
+    type="file"
+    style="display: none"
+    accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+    on:change={handleReplaceFile}
+  />
 
   {#if isUploading}
     <div class="uploading-indicator">
@@ -109,10 +284,24 @@
     </div>
   {/if}
 
-  {#if cmsDataValue?.uploads && cmsDataValue.uploads.length > 0}
+  {#if isReplacing}
+    <div class="uploading-indicator">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>Replacing file...</span>
+    </div>
+  {/if}
+
+  {#if filteredUploads && filteredUploads.length > 0}
     <div class="uploads-grid">
-      {#each cmsDataValue.uploads as upload}
-        <div class="upload-card">
+      {#each filteredUploads as upload}
+        <div class="upload-card {selectedFiles.has(upload.id) ? 'selected' : ''}">
+          <div class="upload-checkbox">
+            <input
+              type="checkbox"
+              checked={selectedFiles.has(upload.id)}
+              on:change={() => toggleSelect(upload.id)}
+            />
+          </div>
           <div class="upload-icon">
             <i class="fas {getFileIcon(upload.mime_type)}"></i>
           </div>
@@ -124,6 +313,9 @@
             </p>
           </div>
           <div class="upload-actions">
+            <button class="btn-icon" on:click={() => requestReplace(upload.id)} title="Replace">
+              <i class="fas fa-sync"></i>
+            </button>
             {#if isPreviewable(upload.mime_type)}
               <button class="btn-icon" on:click={() => openPreview(upload)} title="Preview">
                 <i class="fas fa-eye"></i>
@@ -139,8 +331,13 @@
   {:else}
     <div class="empty-state">
       <i class="fas fa-upload"></i>
-      <h3>No uploads yet</h3>
-      <p>Upload your first file to get started</p>
+      {#if searchQuery}
+        <h3>No files found</h3>
+        <p>No uploads match your search: "{searchQuery}"</p>
+      {:else}
+        <h3>No uploads yet</h3>
+        <p>Upload your first file to get started</p>
+      {/if}
     </div>
   {/if}
 
@@ -191,6 +388,17 @@
     onConfirm={confirmDelete}
     onCancel={cancelDelete}
   />
+
+  <ConfirmModal
+    isOpen={showBulkDeleteConfirm}
+    title="Delete Selected Files"
+    message="Are you sure you want to delete {selectedFiles.size} selected file(s)? This action cannot be undone."
+    confirmText="Delete All"
+    cancelText="Cancel"
+    isDestructive={true}
+    onConfirm={confirmBulkDelete}
+    onCancel={cancelBulkDelete}
+  />
 </div>
 
 <style>
@@ -203,36 +411,90 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
   }
 
   .section-header h2 {
     font-size: 24px;
-    color: #0f172a;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 12px;
+    margin: 0;
   }
 
   .section-header h2 i {
-    color: #2563eb;
+    color: var(--color-primary);
   }
 
-  .btn-primary {
-    padding: 10px 16px;
-    border: none;
-    background: #2563eb;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    min-width: 200px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  .bulk-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-danger);
+  }
+
+  .selected-count {
+    font-size: 13px;
     font-weight: 600;
+    color: var(--color-danger);
+  }
+
+  .btn-secondary {
+    padding: 8px 16px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    font-size: 14px;
   }
 
-  .btn-primary:hover {
-    background: #1d4ed8;
+  .btn-secondary:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--color-primary);
+  }
+
+  .btn-danger {
+    padding: 8px 16px;
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-md);
+    background: var(--color-danger);
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    font-size: 14px;
+  }
+
+  .btn-danger:hover {
+    background: var(--color-danger-dark);
   }
 
   .uploading-indicator {
@@ -253,13 +515,36 @@
   }
 
   .upload-card {
-    background: var(--bg-card, white);
+    background: var(--bg-card);
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     gap: 12px;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+
+  .upload-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .upload-card.selected {
+    border-color: var(--color-primary);
+    background: rgba(37, 99, 235, 0.05);
+  }
+
+  .upload-checkbox {
+    flex-shrink: 0;
+  }
+
+  .upload-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
   }
 
   .upload-icon {
