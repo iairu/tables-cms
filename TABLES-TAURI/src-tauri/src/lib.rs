@@ -7,10 +7,32 @@ use tauri::{Manager, Emitter};
 use tauri_plugin_fs::FsExt;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
+use std::process::Command;
+use std::collections::HashMap;
 
 // Recent projects storage
 static RECENT_PROJECTS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
 static CURRENT_PROJECT: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
+
+// Deployment state
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DeploymentStatus {
+    pub is_deploying: bool,
+    pub last_deployment: Option<u64>,
+    pub deployment_id: Option<String>,
+    pub deployment_url: Option<String>,
+    pub build_logs: Vec<String>,
+}
+
+static DEPLOYMENT_STATUS: Lazy<Mutex<DeploymentStatus>> = Lazy::new(|| {
+    Mutex::new(DeploymentStatus {
+        is_deploying: false,
+        last_deployment: None,
+        deployment_id: None,
+        deployment_url: None,
+        build_logs: Vec::new(),
+    })
+});
 
 // Attachment file storage
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -369,6 +391,144 @@ fn get_current_project() -> Result<Option<String>, String> {
     Ok(current.clone())
 }
 
+// Deployment commands
+#[tauri::command]
+fn trigger_build() -> Result<String, String> {
+    let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+    status.is_deploying = true;
+    status.build_logs.push("Build started...".to_string());
+    
+    Ok("Build triggered".to_string())
+}
+
+#[tauri::command]
+fn trigger_deploy(app: tauri::AppHandle, vercel_api_key: String, _vercel_project_id: String) -> Result<String, String> {
+    let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+    status.is_deploying = true;
+    status.build_logs.clear();
+    status.build_logs.push("Starting deployment to Vercel...".to_string());
+    
+    // Get project directory
+    let project_dir = std::env::current_dir()
+        .map_err(|e| format!("Failed to get current directory: {}", e))?;
+    
+    // Run SSG build
+    status.build_logs.push("Running SSG build...".to_string());
+    let build_output = Command::new("npm")
+        .arg("run")
+        .arg("build:ssg")
+        .current_dir(&project_dir)
+        .output();
+    
+    match build_output {
+        Ok(output) => {
+            if output.status.success() {
+                status.build_logs.push("SSG build completed successfully".to_string());
+                
+                // Deploy to Vercel using CLI
+                status.build_logs.push("Deploying to Vercel...".to_string());
+                let deploy_output = Command::new("vercel")
+                    .arg("--prod")
+                    .arg("--token")
+                    .arg(&vercel_api_key)
+                    .current_dir(&project_dir)
+                    .output();
+                
+                match deploy_output {
+                    Ok(output) => {
+                        if output.status.success() {
+                            let deployment_url = String::from_utf8_lossy(&output.stdout).to_string();
+                            status.deployment_url = Some(deployment_url.clone());
+                            status.deployment_id = Some(format!("deploy_{}", Uuid::new_v4()));
+                            status.last_deployment = Some(
+                                std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .map_err(|e| e.to_string())?
+                                    .as_secs()
+                            );
+                            status.is_deploying = false;
+                            status.build_logs.push(format!("Deployment successful: {}", deployment_url));
+                            
+                            // Emit deployment complete event
+                            let _ = app.emit("deployment-complete", HashMap::from([
+                                ("url", deployment_url.clone()),
+                                ("id", status.deployment_id.clone().unwrap_or_default()),
+                            ]));
+                            
+                            Ok(format!("Deployment successful: {}", deployment_url))
+                        } else {
+                            let error = String::from_utf8_lossy(&output.stderr).to_string();
+                            status.build_logs.push(format!("Deployment failed: {}", error));
+                            status.is_deploying = false;
+                            Err(format!("Vercel deployment failed: {}", error))
+                        }
+                    }
+                    Err(e) => {
+                        let error = format!("Failed to run vercel command: {}", e);
+                        status.build_logs.push(error.clone());
+                        status.is_deploying = false;
+                        Err(error)
+                    }
+                }
+            } else {
+                let error = String::from_utf8_lossy(&output.stderr).to_string();
+                status.build_logs.push(format!("Build failed: {}", error));
+                status.is_deploying = false;
+                Err(format!("SSG build failed: {}", error))
+            }
+        }
+        Err(e) => {
+            let error = format!("Failed to run build command: {}", e);
+            status.build_logs.push(error.clone());
+            status.is_deploying = false;
+            Err(error)
+        }
+    }
+}
+
+#[tauri::command]
+fn get_deployment_status() -> Result<DeploymentStatus, String> {
+    let status = DEPLOYMENT_STATUS.lock().unwrap();
+    Ok(status.clone())
+}
+
+#[tauri::command]
+fn get_build_logs() -> Result<Vec<String>, String> {
+    let status = DEPLOYMENT_STATUS.lock().unwrap();
+    Ok(status.build_logs.clone())
+}
+
+#[tauri::command]
+fn clear_build_logs() -> Result<(), String> {
+    let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+    status.build_logs.clear();
+    Ok(())
+}
+
+#[tauri::command]
+fn trigger_vercel_webhook(webhook_url: String) -> Result<String, String> {
+    // Trigger Vercel deployment webhook
+    let client = reqwest::blocking::Client::new();
+    
+    let response = client.post(&webhook_url)
+        .json(&serde_json::json!({
+            "event": "manual",
+            "source": "tables-cms"
+        }))
+        .send();
+    
+    match response {
+        Ok(resp) => {
+            if resp.status().is_success() {
+                Ok("Webhook triggered successfully".to_string())
+            } else {
+                Err(format!("Webhook failed with status: {}", resp.status()))
+            }
+        }
+        Err(e) => Err(format!("Failed to trigger webhook: {}", e))
+    }
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -386,7 +546,14 @@ pub fn run() {
             save_project,
             close_project,
             get_recent_projects,
-            clear_recent_projects
+            clear_recent_projects,
+            get_current_project,
+            trigger_build,
+            trigger_deploy,
+            get_deployment_status,
+            get_build_logs,
+            clear_build_logs,
+            trigger_vercel_webhook
         ])
         .setup(|app| {
             let fs_scope = app.fs_scope();
