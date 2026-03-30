@@ -21,7 +21,7 @@
   import UploadsSection from './components/cms/sections/UploadsSection.svelte';
   import MoviesSection from './components/cms/sections/MoviesSection.svelte';
   import BuildConsole from './components/BuildConsole.svelte';
-  import { cmsData, loadCMSData, triggerBuild } from './stores/cmsData.js';
+  import { cmsData, loadCMSData, triggerBuild, clearBuildLogs } from './stores/cmsData.js';
   import { isLoading, showLoading, hideLoading } from './stores/loading.js';
 
   const isBrowser = typeof window !== 'undefined';
@@ -124,6 +124,7 @@
   async function handleBuildLocally() {
     try {
       showBuildConsole = true;
+      await clearBuildLogs();
       await triggerBuild(true);
     } catch (error) {
       console.error('Build failed:', error);
@@ -134,6 +135,7 @@
   async function handleBuildAndDeploy() {
     try {
       showBuildConsole = true;
+      await clearBuildLogs();
       await triggerBuild(false);
     } catch (error) {
       console.error('Deployment failed:', error);

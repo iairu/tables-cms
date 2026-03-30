@@ -25,25 +25,37 @@
   $: effectiveOpen = open || isOpen;
 
   onMount(async () => {
-    // Listen for deployment complete event
-    const unlisten = await listen('deployment-complete', (event) => {
-      buildLogs.push(`✅ Deployment complete!`);
-      buildLogs.push(`   URL: ${event.payload.url}`);
-      buildLogs.push(`   ID: ${event.payload.id}`);
+    // Listen for real-time build logs
+    const unlistenLog = await listen('build-log', (event) => {
+      buildLogs = [...buildLogs, event.payload];
       
       if (autoScroll && logsContainer) {
-        logsContainer.scrollTop = logsContainer.scrollHeight;
+        // Use setTimeout to ensure DOM is updated before scrolling
+        setTimeout(() => {
+          logsContainer.scrollTop = logsContainer.scrollHeight;
+        }, 0);
       }
     });
 
-    // Refresh logs periodically when open
+    // Listen for deployment complete event
+    const unlistenComplete = await listen('deployment-complete', (event) => {
+      buildLogs = [...buildLogs, `✅ Deployment complete!`, `   URL: ${event.payload.url}`, `   ID: ${event.payload.id}`];
+      
+      if (autoScroll && logsContainer) {
+        setTimeout(() => {
+          logsContainer.scrollTop = logsContainer.scrollHeight;
+        }, 0);
+      }
+    });
+
+    // Still keep a slower polling for status and existing logs (initial/recovery)
     refreshInterval = setInterval(async () => {
-      if (isOpen) {
-        const logs = await getBuildLogs();
-        if (logs && logs.length > buildLogs.length) {
-          buildLogs = logs;
-          if (autoScroll && logsContainer) {
-            logsContainer.scrollTop = logsContainer.scrollHeight;
+      if (effectiveOpen) {
+        // Only fetch all logs if we're behind significantly or just opened
+        if (buildLogs.length === 0) {
+          const logs = await getBuildLogs();
+          if (logs && logs.length > 0) {
+            buildLogs = logs;
           }
         }
         
@@ -52,14 +64,18 @@
           deploymentStatus = status;
         }
       }
-    }, 1000);
+    }, 2000);
 
     // Initial load
-    buildLogs = await getBuildLogs();
+    const initialLogs = await getBuildLogs();
+    if (initialLogs && initialLogs.length > 0) {
+      buildLogs = initialLogs;
+    }
     deploymentStatus = await getDeploymentStatus();
 
     return () => {
-      unlisten();
+      unlistenLog();
+      unlistenComplete();
       if (refreshInterval) {
         clearInterval(refreshInterval);
       }

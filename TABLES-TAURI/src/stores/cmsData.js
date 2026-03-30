@@ -655,9 +655,32 @@ export async function triggerBuild(localOnly = false) {
     try {
       cmsData.update(data => ({ ...data, isBuilding: true, canBuild: false }));
       
+      // Collect relevant CMS data for export
+      const exportData = {
+        pages: cmsDataValue?.pages || [],
+        pageGroups: cmsDataValue?.pageGroups || [],
+        blogArticles: cmsDataValue?.blogArticles || [],
+        settings: cmsDataValue?.settings || {},
+        extensions: cmsDataValue?.extensions || {},
+        catRows: cmsDataValue?.catRows || [],
+        userRows: cmsDataValue?.userRows || [],
+        biometricRows: cmsDataValue?.biometricRows || [],
+        medicalRows: cmsDataValue?.medicalRows || [],
+        financialRows: cmsDataValue?.financialRows || [],
+        legalRows: cmsDataValue?.legalRows || [],
+        inventoryRows: cmsDataValue?.inventoryRows || [],
+        customerRows: cmsDataValue?.customerRows || [],
+        employeeRows: cmsDataValue?.employeeRows || [],
+        attendanceRows: cmsDataValue?.attendanceRows || [],
+        reservationRows: cmsDataValue?.reservationRows || [],
+        componentRows: cmsDataValue?.componentRows || [],
+        movieList: cmsDataValue?.movieList || [],
+        acl: cmsDataValue?.acl || {}
+      };
+
       if (localOnly) {
         // Trigger local build only
-        await invoke('trigger_build');
+        await invoke('trigger_build', { cmsData: exportData });
       } else {
         // Trigger full deployment
         const settings = cmsDataValue?.settings || {};
@@ -670,7 +693,8 @@ export async function triggerBuild(localOnly = false) {
         
         await invoke('trigger_deploy', {
           vercelApiKey,
-          vercelProjectId
+          vercelProjectId,
+          cmsData: exportData
         });
       }
       
@@ -694,16 +718,42 @@ export async function triggerBuild(localOnly = false) {
   } else {
     // Browser fallback - simulate build
     console.log('Build triggered (browser mode)', localOnly ? '(local only)' : '');
-    cmsData.update(data => ({ ...data, isBuilding: true, canBuild: false }));
+    cmsData.update(data => ({ 
+      ...data, 
+      isBuilding: true, 
+      canBuild: false,
+      buildLogs: [`[Browser] Starting ${localOnly ? 'local build' : 'deployment'} simulation...`]
+    }));
     
-    setTimeout(() => {
-      cmsData.update(data => ({
-        ...data,
-        isBuilding: false,
-        canBuild: true,
-        lastSaved: Date.now()
-      }));
-    }, 2000);
+    // Simulate some logs
+    const steps = [
+      'Preparing build environment...',
+      'Installing dependencies...',
+      'Compiling Svelte components...',
+      'Optimizing assets...',
+      'Generating static files...',
+      'Deployment successful!'
+    ];
+    
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      if (currentStep < steps.length) {
+        cmsData.update(data => ({
+          ...data,
+          buildLogs: [...data.buildLogs, `[Browser] ${steps[currentStep]}`]
+        }));
+        currentStep++;
+      } else {
+        clearInterval(interval);
+        cmsData.update(data => ({
+          ...data,
+          isBuilding: false,
+          canBuild: true,
+          lastSaved: Date.now(),
+          buildLogs: [...data.buildLogs, '✅ Build simulation complete!']
+        }));
+      }
+    }, 800);
     
     return { success: true };
   }
@@ -720,7 +770,11 @@ export async function getDeploymentStatus() {
       return null;
     }
   }
-  return null;
+  return {
+    is_deploying: cmsDataValue?.isBuilding,
+    last_deployment: cmsDataValue?.lastSaved ? cmsDataValue.lastSaved / 1000 : null,
+    deployment_url: cmsDataValue?.settings?.domain || null
+  };
 }
 
 // Get build logs from Tauri backend
@@ -734,11 +788,12 @@ export async function getBuildLogs() {
       return [];
     }
   }
-  return [];
+  return cmsDataValue?.buildLogs || [];
 }
 
 // Clear build logs
 export async function clearBuildLogs() {
+  cmsData.update(data => ({ ...data, buildLogs: [] }));
   if (isBrowser && window.__TAURI__) {
     const { invoke } = await import('@tauri-apps/api/core');
     try {

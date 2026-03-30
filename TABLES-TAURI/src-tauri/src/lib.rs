@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::fs;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
@@ -393,96 +393,322 @@ fn get_current_project() -> Result<Option<String>, String> {
 
 // Deployment commands
 #[tauri::command]
-fn trigger_build() -> Result<String, String> {
+fn trigger_build(app: tauri::AppHandle, cms_data: serde_json::Value) -> Result<String, String> {
     let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+    if status.is_deploying {
+        return Err("A build or deployment is already in progress".to_string());
+    }
+    
     status.is_deploying = true;
-    status.build_logs.push("Build started...".to_string());
+    status.build_logs.clear();
+    status.build_logs.push("🔨 Starting local build...".to_string());
+    let _ = app.emit("build-log", "🔨 Starting local build...");
+    drop(status);
+
+    let app_handle = app.clone();
+    std::thread::spawn(move || {
+        let project_dir = match std::env::current_dir() {
+            Ok(dir) => dir,
+            Err(e) => {
+                let err_msg = format!("❌ Error: Failed to get current directory: {}", e);
+                let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+                status.is_deploying = false;
+                status.build_logs.push(err_msg.clone());
+                let _ = app_handle.emit("build-log", err_msg);
+                return;
+            }
+        };
+
+        // Save CMS data to files first
+        if let Err(e) = save_cms_data(&project_dir, &cms_data) {
+            let err_msg = format!("❌ Error: Failed to save CMS data: {}", e);
+            let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+            status.is_deploying = false;
+            status.build_logs.push(err_msg.clone());
+            let _ = app_handle.emit("build-log", err_msg);
+            return;
+        }
+
+        let result = execute_command_with_logs(
+            &app_handle,
+            "npm",
+            &["run", "build:ssg"],
+            &project_dir
+        );
+
+        let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+        status.is_deploying = false;
+        match result {
+            Ok(_) => {
+                let msg = "✅ Local build completed successfully".to_string();
+                status.build_logs.push(msg.clone());
+                let _ = app_handle.emit("build-log", msg);
+                status.last_deployment = Some(
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs()
+                );
+            }
+            Err(e) => {
+                let msg = format!("❌ Build failed: {}", e);
+                status.build_logs.push(msg.clone());
+                let _ = app_handle.emit("build-log", msg);
+            }
+        }
+    });
     
     Ok("Build triggered".to_string())
 }
 
 #[tauri::command]
-fn trigger_deploy(app: tauri::AppHandle, vercel_api_key: String, _vercel_project_id: String) -> Result<String, String> {
+fn trigger_deploy(
+    app: tauri::AppHandle, 
+    vercel_api_key: String, 
+    vercel_project_id: String,
+    cms_data: serde_json::Value
+) -> Result<String, String> {
     let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+    if status.is_deploying {
+        return Err("A build or deployment is already in progress".to_string());
+    }
+    
     status.is_deploying = true;
     status.build_logs.clear();
-    status.build_logs.push("Starting deployment to Vercel...".to_string());
-    
-    // Get project directory
-    let project_dir = std::env::current_dir()
-        .map_err(|e| format!("Failed to get current directory: {}", e))?;
-    
-    // Run SSG build
-    status.build_logs.push("Running SSG build...".to_string());
-    let build_output = Command::new("npm")
-        .arg("run")
-        .arg("build:ssg")
-        .current_dir(&project_dir)
-        .output();
-    
-    match build_output {
-        Ok(output) => {
-            if output.status.success() {
-                status.build_logs.push("SSG build completed successfully".to_string());
-                
-                // Deploy to Vercel using CLI
-                status.build_logs.push("Deploying to Vercel...".to_string());
-                let deploy_output = Command::new("vercel")
-                    .arg("--prod")
-                    .arg("--token")
-                    .arg(&vercel_api_key)
-                    .current_dir(&project_dir)
-                    .output();
-                
-                match deploy_output {
-                    Ok(output) => {
-                        if output.status.success() {
-                            let deployment_url = String::from_utf8_lossy(&output.stdout).to_string();
-                            status.deployment_url = Some(deployment_url.clone());
-                            status.deployment_id = Some(format!("deploy_{}", Uuid::new_v4()));
-                            status.last_deployment = Some(
-                                std::time::SystemTime::now()
-                                    .duration_since(std::time::UNIX_EPOCH)
-                                    .map_err(|e| e.to_string())?
-                                    .as_secs()
-                            );
-                            status.is_deploying = false;
-                            status.build_logs.push(format!("Deployment successful: {}", deployment_url));
-                            
-                            // Emit deployment complete event
-                            let _ = app.emit("deployment-complete", HashMap::from([
-                                ("url", deployment_url.clone()),
-                                ("id", status.deployment_id.clone().unwrap_or_default()),
-                            ]));
-                            
-                            Ok(format!("Deployment successful: {}", deployment_url))
-                        } else {
-                            let error = String::from_utf8_lossy(&output.stderr).to_string();
-                            status.build_logs.push(format!("Deployment failed: {}", error));
-                            status.is_deploying = false;
-                            Err(format!("Vercel deployment failed: {}", error))
-                        }
-                    }
-                    Err(e) => {
-                        let error = format!("Failed to run vercel command: {}", e);
-                        status.build_logs.push(error.clone());
-                        status.is_deploying = false;
-                        Err(error)
-                    }
-                }
-            } else {
-                let error = String::from_utf8_lossy(&output.stderr).to_string();
-                status.build_logs.push(format!("Build failed: {}", error));
+    status.build_logs.push("🚀 Starting deployment to Vercel...".to_string());
+    let _ = app.emit("build-log", "🚀 Starting deployment to Vercel...");
+    drop(status);
+
+    let app_handle = app.clone();
+    std::thread::spawn(move || {
+        let project_dir = match std::env::current_dir() {
+            Ok(dir) => dir,
+            Err(e) => {
+                let err_msg = format!("❌ Error: Failed to get current directory: {}", e);
+                let mut status = DEPLOYMENT_STATUS.lock().unwrap();
                 status.is_deploying = false;
-                Err(format!("SSG build failed: {}", error))
+                status.build_logs.push(err_msg.clone());
+                let _ = app_handle.emit("build-log", err_msg);
+                return;
+            }
+        };
+
+        // Save CMS data to files first
+        if let Err(e) = save_cms_data(&project_dir, &cms_data) {
+            let err_msg = format!("❌ Error: Failed to save CMS data: {}", e);
+            let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+            status.is_deploying = false;
+            status.build_logs.push(err_msg.clone());
+            let _ = app_handle.emit("build-log", err_msg);
+            return;
+        }
+
+        // Step 1: Build
+        let build_msg = "📦 Running SSG build...".to_string();
+        {
+            let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+            status.build_logs.push(build_msg.clone());
+        }
+        let _ = app_handle.emit("build-log", build_msg);
+
+        let build_result = execute_command_with_logs(
+            &app_handle,
+            "npm",
+            &["run", "build:ssg"],
+            &project_dir
+        );
+
+        if let Err(e) = build_result {
+            let err_msg = format!("❌ Build failed: {}", e);
+            let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+            status.is_deploying = false;
+            status.build_logs.push(err_msg.clone());
+            let _ = app_handle.emit("build-log", err_msg);
+            return;
+        }
+
+        // Step 2: Deploy
+        let deploy_msg = "🚀 Deploying to Vercel...".to_string();
+        {
+            let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+            status.build_logs.push(deploy_msg.clone());
+        }
+        let _ = app_handle.emit("build-log", deploy_msg);
+
+        let mut deploy_args = vec!["--prod", "--token", &vercel_api_key];
+        if !vercel_project_id.is_empty() {
+            deploy_args.push("--scope");
+            deploy_args.push(&vercel_project_id);
+        }
+
+        let deploy_result = execute_command_with_logs(
+            &app_handle,
+            "vercel",
+            &deploy_args,
+            &project_dir
+        );
+
+        let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+        status.is_deploying = false;
+        match deploy_result {
+            Ok(url) => {
+                let final_url = if url.is_empty() { "Check Vercel Dashboard".to_string() } else { url };
+                status.deployment_url = Some(final_url.clone());
+                status.deployment_id = Some(format!("deploy_{}", Uuid::new_v4()));
+                status.last_deployment = Some(
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs()
+                );
+                let msg = format!("✅ Deployment successful: {}", final_url);
+                status.build_logs.push(msg.clone());
+                let _ = app_handle.emit("build-log", msg);
+                
+                let _ = app_handle.emit("deployment-complete", HashMap::from([
+                    ("url", final_url),
+                    ("id", status.deployment_id.clone().unwrap_or_default()),
+                ]));
+            }
+            Err(e) => {
+                let msg = format!("❌ Deployment failed: {}", e);
+                status.build_logs.push(msg.clone());
+                let _ = app_handle.emit("build-log", msg);
             }
         }
-        Err(e) => {
-            let error = format!("Failed to run build command: {}", e);
-            status.build_logs.push(error.clone());
-            status.is_deploying = false;
-            Err(error)
+    });
+
+    Ok("Deployment triggered".to_string())
+}
+
+fn save_cms_data(project_dir: &Path, data: &serde_json::Value) -> Result<(), String> {
+    let cms_dir = project_dir.join("public").join("cms");
+    if !cms_dir.exists() {
+        std::fs::create_dir_all(&cms_dir).map_err(|e| format!("Failed to create cms directory: {}", e))?;
+    }
+
+    // Get extensions for filtering
+    let extensions = data.get("extensions").and_then(|v| v.as_object());
+    let is_blog_enabled = extensions
+        .and_then(|e| e.get("blog-extension-enabled").and_then(|v| v.as_bool()))
+        .unwrap_or(true);
+    let are_cats_enabled = extensions
+        .and_then(|e| e.get("pedigree-extension-enabled").and_then(|v| v.as_bool()))
+        .unwrap_or(true);
+
+    let keys = vec![
+        "pages", "pageGroups", "blogArticles", "settings", "extensions", 
+        "catRows", "userRows", "biometricRows", "medicalRows", "financialRows", 
+        "legalRows", "inventoryRows", "customerRows", "employeeRows", 
+        "attendanceRows", "reservationRows", "componentRows", "movieList", "acl"
+    ];
+
+    for key in keys {
+        if let Some(mut value) = data.get(key).cloned() {
+            let filename = format!("{}.json", key);
+            let file_path = cms_dir.join(&filename);
+
+            // Apply special logic per key
+            match key {
+                "pages" => {
+                    if !is_blog_enabled {
+                        if let Some(pages_arr) = value.as_array_mut() {
+                            pages_arr.retain(|p| {
+                                p.get("slug").and_then(|s| s.as_str()) != Some("blog")
+                            });
+                        }
+                    }
+                },
+                "blogArticles" => {
+                    if !is_blog_enabled {
+                        value = serde_json::Value::Array(vec![]);
+                    }
+                },
+                "catRows" => {
+                    if !are_cats_enabled {
+                        value = serde_json::Value::Array(vec![]);
+                    }
+                },
+                "settings" => {
+                    if let Some(settings_obj) = value.as_object_mut() {
+                        if settings_obj.contains_key("vercelApiKey") {
+                            settings_obj.insert(
+                                "vercelApiKey".to_string(), 
+                                serde_json::Value::String("***HIDDEN***".to_string())
+                            );
+                        }
+                        // Add runtime flag for frontend
+                        settings_obj.insert(
+                            "hasBlogArticles".to_string(),
+                            serde_json::Value::Bool(
+                                is_blog_enabled && 
+                                data.get("blogArticles").and_then(|v| v.as_array()).map(|a| !a.is_empty()).unwrap_or(false)
+                            )
+                        );
+                    }
+                },
+                _ => {}
+            }
+
+            let content = serde_json::to_string_pretty(&value).map_err(|e| format!("Failed to serialize {}: {}", key, e))?;
+            std::fs::write(file_path, content).map_err(|e| format!("Failed to write {}: {}", filename, e))?;
         }
+    }
+
+    Ok(())
+}
+
+fn execute_command_with_logs(
+    app: &tauri::AppHandle,
+    command: &str,
+    args: &[&str],
+    cwd: &PathBuf
+) -> Result<String, String> {
+    use std::io::{BufRead, BufReader};
+    use std::process::Stdio;
+
+    let mut child = Command::new(command)
+        .args(args)
+        .current_dir(cwd)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Failed to spawn {}: {}", command, e))?;
+
+    let stdout = child.stdout.take().ok_or("Failed to capture stdout")?;
+    let stderr = child.stderr.take().ok_or("Failed to capture stderr")?;
+
+    let app_clone1 = app.clone();
+    let stdout_thread = std::thread::spawn(move || {
+        let reader = BufReader::new(stdout);
+        let mut last_line = String::new();
+        for line in reader.lines().flatten() {
+            let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+            status.build_logs.push(line.clone());
+            let _ = app_clone1.emit("build-log", line.clone());
+            last_line = line;
+        }
+        last_line
+    });
+
+    let app_clone2 = app.clone();
+    let stderr_thread = std::thread::spawn(move || {
+        let reader = BufReader::new(stderr);
+        for line in reader.lines().flatten() {
+            let mut status = DEPLOYMENT_STATUS.lock().unwrap();
+            status.build_logs.push(format!("ERR: {}", line));
+            let _ = app_clone2.emit("build-log", format!("ERR: {}", line));
+        }
+    });
+
+    let status = child.wait().map_err(|e| format!("Command failed: {}", e))?;
+    let last_stdout_line = stdout_thread.join().unwrap_or_default();
+    let _ = stderr_thread.join();
+
+    if status.success() {
+        Ok(last_stdout_line)
+    } else {
+        Err(format!("Command exited with status: {}", status))
     }
 }
 

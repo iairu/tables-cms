@@ -212,3 +212,29 @@ slovak language is missing from supported languages in settings and similar for 
 page groups contain an empty group by default, change its name to Default Group
 
 ---
+
+make the local build work: [Error] ReferenceError: Can't find variable: showBuildConsole
+	handleManualBuild (Layout.svelte:655)
+
+also deploy button does not do anything despite provided vercel key
+
+its not possible to verify build console using a browser because it requires tauri backend to trigger a local script file to create local build files and run "vercel" deployment command using vercel cli locally, make sure that it is implemented and i will verify in tauri app
+
+---
+
+local build has placeholder console output instead of real build output
+
+deploy does not have any console output
+
+fix please
+
+---
+
+here is how the build locally and deploy commands are supposed to work:
+
+there is meant to be a separate frontend structure (separate svelte project), which will be the unpopulated website that takes in json file "api" for content, the "build locally" and "deploy" buttons are both supposed to "build" these json files from current TABLES CMS localStorage content to populate that site and build it and in case of deploy button also deploy the built site to vercel on top of that, the "npm" and "node" process and filesystem rw (for both json to be saved and website frontend to be built) are meant to be handled on the background by tauri while the TABLES CMS receives asynchronous console logs in the build console showing the raw progress of this process, the "website frontend" a.k.a "separate frontend" has yet to be transfered over from TABLES-OLD to TABLES-TAURI as a new svelte frontend
+
+properly migrate the secondary website frontend (main-site) from TABLES-OLD to TABLES-TAURI alongside JSON generation and Vercel deployment found in the very important cms-site/src/api/build.js that handles both build and deployment, show output in cms frontend build console
+
+its showing "build triggered (browser mode)" despite me being in tauri app not browser
+

@@ -44,89 +44,6 @@
   // Show reconnection banner
   $: showReconnectBanner = cmsDataValue?.collabState?.wasConnectedAsClient && !cmsDataValue?.collabState?.isConnected;
   
-  function addBuildLog(message, type = 'info') {
-    const now = new Date();
-    const time = now.toLocaleTimeString();
-    buildLogs = [...buildLogs, { time, message, type }];
-  }
-  
-  function handleManualBuild(localOnly = false) {
-    showBuildConsole = true;
-    buildProgress = 0;
-    buildLogs = [];
-    buildStatus = 'building';
-    buildCancelled = false;
-    
-    addBuildLog('Starting build process...', 'info');
-    addBuildLog(localOnly ? 'Mode: Local Build' : 'Mode: Build & Deploy', 'info');
-    addBuildLog('Initializing...', 'info');
-    
-    // Simulate build progress
-    const progressInterval = setInterval(() => {
-      if (!buildCancelled && buildProgress < 90) {
-        buildProgress += Math.random() * 10;
-        if (buildProgress > 90) buildProgress = 90;
-        
-        // Add some build logs
-        const buildSteps = [
-          'Preparing build environment...',
-          'Installing dependencies...',
-          'Compiling Svelte components...',
-          'Optimizing assets...',
-          'Generating static files...',
-          'Minifying JavaScript...',
-          'Processing CSS...',
-          'Building complete!'
-        ];
-        
-        const stepIndex = Math.floor((buildProgress / 100) * buildSteps.length);
-        if (buildSteps[stepIndex]) {
-          addBuildLog(buildSteps[stepIndex], 'info');
-        }
-      }
-    }, 500);
-    
-    // Complete build after 5 seconds
-    setTimeout(() => {
-      clearInterval(progressInterval);
-      
-      if (buildCancelled) {
-        buildStatus = 'cancelled';
-        buildProgress = 0;
-        addBuildLog('Build cancelled by user', 'warning');
-      } else {
-        buildProgress = 100;
-        buildStatus = 'success';
-        addBuildLog('Build completed successfully!', 'success');
-        addBuildLog(`Output: dist/`, 'success');
-        
-        if (!localOnly) {
-          addBuildLog('Preparing deployment...', 'info');
-          setTimeout(() => {
-            addBuildLog('Deploying to Vercel...', 'info');
-            setTimeout(() => {
-              addBuildLog('Deployment successful!', 'success');
-              addBuildLog('Your site is live!', 'success');
-            }, 1000);
-          }, 500);
-        }
-      }
-    }, 5000);
-  }
-  
-  function cancelBuild() {
-    buildCancelled = true;
-    addBuildLog('Cancelling build...', 'warning');
-  }
-  
-  function closeBuildConsole() {
-    if (buildStatus !== 'building') {
-      showBuildConsole = false;
-      buildLogs = [];
-      buildStatus = 'idle';
-    }
-  }
-  
   function toggleNotesSidebar() {
     isNotesSidebarOpen = !isNotesSidebarOpen;
     if (typeof window !== 'undefined') localStorage.setItem('notes-sidebar-open', isNotesSidebarOpen);
@@ -165,14 +82,14 @@
   
   <Header
     onVisitDomain={() => window.open(cmsDataValue?.settings?.domain, '_blank')}
-    onBuildAndDeploy={() => handleManualBuild(false)}
-    onBuildLocally={() => handleManualBuild(true)}
+    onBuildAndDeploy={onBuildAndDeploy}
+    onBuildLocally={onBuildLocally}
     onToggleNotesSidebar={toggleNotesSidebar}
-    isBuilding={cmsDataValue?.isBuilding}
-    canBuild={cmsDataValue?.canBuild}
-    domain={cmsDataValue?.settings?.domain}
-    vercelApiKey={cmsDataValue?.settings?.vercelApiKey}
-    buildCooldownSeconds={cmsDataValue?.buildCooldownSeconds}
+    isBuilding={isBuilding || cmsDataValue?.isBuilding}
+    canBuild={canBuild || cmsDataValue?.canBuild}
+    domain={cmsDataValue?.settings?.domain || domain}
+    vercelApiKey={cmsDataValue?.settings?.vercelApiKey || vercelApiKey}
+    buildCooldownSeconds={cmsDataValue?.buildCooldownSeconds || buildCooldownSeconds}
     disableImport={cmsDataValue?.collabState?.isConnected && !cmsDataValue?.collabState?.isServer}
     extensions={effectiveExtensions}
   />
@@ -182,16 +99,17 @@
   <main class="main-content" class:notes-open={notesEnabled && isNotesSidebarOpen}>
     <SideMenu
       currentSection={currentSection}
-      isBuilding={cmsDataValue?.isBuilding}
+      isBuilding={isBuilding || cmsDataValue?.isBuilding}
       lastSaved={cmsDataValue?.lastSaved}
-      onBuildClick={handleManualBuild}
-      canBuild={cmsDataValue?.canBuild}
-      buildCooldownSeconds={cmsDataValue?.buildCooldownSeconds}
-      domain={cmsDataValue?.settings?.domain}
-      vercelApiKey={cmsDataValue?.settings?.vercelApiKey}
+      onBuildClick={(local) => local ? onBuildLocally() : onBuildAndDeploy()}
+      canBuild={canBuild || cmsDataValue?.canBuild}
+      buildCooldownSeconds={cmsDataValue?.buildCooldownSeconds || buildCooldownSeconds}
+      domain={cmsDataValue?.settings?.domain || domain}
+      vercelApiKey={cmsDataValue?.settings?.vercelApiKey || vercelApiKey}
       onNavigate={onNavigate}
       extensions={effectiveExtensions}
     />
+
 
     <div class="content-area">
       {#if isLoadingValue}
