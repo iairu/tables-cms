@@ -1,28 +1,39 @@
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
   import { cmsData, loadUploads } from '../../stores/cmsData.js';
-  
+
   const dispatch = createEventDispatcher();
-  
+
+  // Support both prop naming conventions
   export let open = false;
+  export let isOpen = false;
   export let targetType = 'image';
   
+  // Support both event handler props and events
+  export let onSelect = null;
+  export let onClose = null;
+
   let cmsDataValue;
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
   let searchQuery = '';
   
+  // Use isOpen if open is not explicitly set
+  $: effectiveOpen = open || isOpen;
+
   onMount(() => {
-    if (open) {
+    if (effectiveOpen) {
       loadUploads();
     }
   });
-  
+
   function handleClose() {
     dispatch('close');
+    if (onClose) onClose();
   }
-  
+
   function handleSelect(asset) {
     dispatch('select', asset);
+    if (onSelect) onSelect(asset);
   }
   
   $: filteredUploads = (cmsDataValue?.uploads || []).filter(upload => {

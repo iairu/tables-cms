@@ -3,14 +3,26 @@
   import { listen } from '@tauri-apps/api/event';
   import { getBuildLogs, getDeploymentStatus, clearBuildLogs } from '../stores/cmsData.js';
 
+  // Support both prop naming conventions
   export let isOpen = false;
+  export let open = false;
   export let onClose = () => {};
+  export let onCancel = null;
+  
+  // Additional props for build state (passed from parent)
+  export let isBuilding = false;
+  export let progress = 0;
+  export let logs = [];
+  export let status = 'idle';
 
   let buildLogs = [];
   let deploymentStatus = null;
   let autoScroll = true;
   let logsContainer = null;
   let refreshInterval = null;
+  
+  // Use isOpen if open is not explicitly set
+  $: effectiveOpen = open || isOpen;
 
   onMount(async () => {
     // Listen for deployment complete event

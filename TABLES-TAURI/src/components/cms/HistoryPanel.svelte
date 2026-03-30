@@ -1,6 +1,5 @@
 <script>
   import { onMount } from 'svelte';
-  import { isLoading, showLoading, hideLoading } from '../../stores/loading.js';
   import ConfirmModal from '../ConfirmModal.svelte';
 
   export let history = [];
@@ -16,15 +15,11 @@
   let showConfirmClear = false;
   let searchQuery = '';
   let actionFilter = 'all';
-  let isLoadingValue;
-
-  const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
 
   onMount(() => {
-    showLoading();
-    setTimeout(() => {
-      hideLoading();
-    }, 300);
+    return () => {
+      // Cleanup if needed
+    };
   });
 
   function formatDate(timestamp) {

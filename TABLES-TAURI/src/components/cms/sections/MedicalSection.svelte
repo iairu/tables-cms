@@ -2,12 +2,10 @@
   import { onMount } from 'svelte';
   import { cmsData } from '../../../stores/cmsData.js';
   import { saveMedicalRows } from '../../../stores/cmsData.js';
-  import { isLoading, showLoading, hideLoading } from '../../../stores/loading.js';
   import ConfirmModal from '../../ConfirmModal.svelte';
 
   let cmsDataValue;
   let medicalRows = [];
-  let isLoadingValue;
   let searchQuery = '';
   let selectedRecord = null;
   let isEditing = false;
@@ -47,13 +45,10 @@
     medicalRows = value.medicalRows || [];
   });
 
-  const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
-
   onMount(() => {
-    showLoading();
-    setTimeout(() => {
-      hideLoading();
-    }, 500);
+    return () => {
+      unsubscribeCms();
+    };
   });
 
   function resetForm() {

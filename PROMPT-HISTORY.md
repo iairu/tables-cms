@@ -133,3 +133,21 @@ continue
 add any missing details and full vercel deployment integration from TABLES-OLD to TABLES-TAURI
 
 make sure vercel deployment integration is fully working
+
+---
+
+have a breathing icon in center while loading the app
+
+loading skeleton is not properly optimized for dark mode
+
+[Warning] <AssetManagerModal> was created with unknown prop 'isOpen' (AssetManagerModal.svelte, line 519)
+[Warning] <AssetManagerModal> was created with unknown prop 'onSelect' (AssetManagerModal.svelte, line 519)
+[Warning] <AssetManagerModal> was created with unknown prop 'onClose' (AssetManagerModal.svelte, line 519)
+
+access control page is stuck on loading skeleton with maximum call stack size exceeded being spammed in console, same for pages view
+
+---
+
+PagesSection and ACLSection get stuck on loading, BlogSection works just fine
+
+aclsection works well, pagessection still gets stuck

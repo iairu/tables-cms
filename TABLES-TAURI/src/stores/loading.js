@@ -9,13 +9,11 @@ export const isLoading = writable(false);
 export const showLoading = () => {
   if (isBrowser) {
     isLoading.set(true);
-    window.dispatchEvent(new CustomEvent('show-loading'));
   }
 };
 
 export const hideLoading = () => {
   if (isBrowser) {
     isLoading.set(false);
-    window.dispatchEvent(new CustomEvent('hide-loading'));
   }
 };

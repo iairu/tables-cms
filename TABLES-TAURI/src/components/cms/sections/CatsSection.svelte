@@ -2,20 +2,18 @@
   import { onMount } from 'svelte';
   import { cmsData } from '../../../stores/cmsData.js';
   import { saveCatRows } from '../../../stores/cmsData.js';
-  import { isLoading, showLoading, hideLoading } from '../../../stores/loading.js';
   import ConfirmModal from '../../ConfirmModal.svelte';
   import AssetManagerModal from '../AssetManagerModal.svelte';
 
   let cmsDataValue;
   let catRows = [];
-  let isLoadingValue;
   let searchQuery = '';
   let selectedCat = null;
   let isEditing = false;
   let showConfirmDelete = false;
   let catToDelete = null;
   let showAssetManager = false;
-  let viewMode = 'table'; // 'table' or 'tree'
+  let viewMode = 'table';
   let selectedCatForTree = null;
   let showFamilyTree = false;
   let showDescendantsTree = false;
@@ -86,13 +84,10 @@
     catRows = value.catRows || [];
   });
 
-  const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
-
   onMount(() => {
-    showLoading();
-    setTimeout(() => {
-      hideLoading();
-    }, 500);
+    return () => {
+      unsubscribeCms();
+    };
   });
 
   function resetForm() {

@@ -74,16 +74,6 @@
 <style>
   .loading-skeleton {
     padding: 20px;
-    animation: skeleton-pulse 1.5s ease-in-out infinite;
-  }
-
-  @keyframes skeleton-pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.6;
-    }
   }
 
   .skeleton-grid {
@@ -93,15 +83,16 @@
   }
 
   .skeleton-card {
-    background: var(--bg-card, white);
+    background: var(--bg-card, #ffffff);
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
   }
 
   .skeleton-image {
     height: 160px;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: 8px;
@@ -110,7 +101,7 @@
 
   .skeleton-title {
     height: 20px;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: 4px;
@@ -120,7 +111,7 @@
 
   .skeleton-text {
     height: 14px;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: 4px;
@@ -150,7 +141,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    background: var(--bg-card, white);
+    background: var(--bg-card, #ffffff);
     padding: 16px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -160,7 +151,7 @@
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     flex-shrink: 0;
@@ -171,7 +162,7 @@
   }
 
   .skeleton-table {
-    background: var(--bg-card, white);
+    background: var(--bg-card, #ffffff);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -181,8 +172,8 @@
     display: grid;
     grid-template-columns: 2fr 1fr 1fr 80px;
     gap: 1px;
-    background: #e2e8f0;
-    border-bottom: 1px solid #e2e8f0;
+    background: var(--border-light, #e2e8f0);
+    border-bottom: 1px solid var(--border-light, #e2e8f0);
   }
 
   .skeleton-table-row:last-child {
@@ -191,13 +182,13 @@
 
   .skeleton-cell {
     height: 48px;
-    background: var(--bg-card, white);
+    background: var(--bg-card, #ffffff);
     padding: 12px 16px;
   }
 
   .skeleton-cell > * {
     height: 100%;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: 4px;
@@ -212,7 +203,7 @@
   }
 
   .skeleton-form {
-    background: var(--bg-card, white);
+    background: var(--bg-card, #ffffff);
     padding: 24px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -229,7 +220,7 @@
   .skeleton-label {
     height: 14px;
     width: 100px;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: 4px;
@@ -238,7 +229,7 @@
 
   .skeleton-input {
     height: 40px;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: 6px;
@@ -255,7 +246,7 @@
   }
 
   .skeleton-article {
-    background: var(--bg-card, white);
+    background: var(--bg-card, #ffffff);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -263,7 +254,7 @@
 
   .skeleton-article-image {
     height: 200px;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
   }
@@ -274,7 +265,7 @@
 
   .skeleton-article-title {
     height: 24px;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: 4px;
@@ -285,7 +276,7 @@
   .skeleton-article-meta {
     height: 14px;
     width: 120px;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: 4px;
@@ -294,7 +285,7 @@
 
   .skeleton-article-excerpt {
     height: 14px;
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, var(--bg-secondary, #f1f5f9) 25%, var(--bg-tertiary, #e2e8f0) 50%, var(--bg-secondary, #f1f5f9) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: 4px;

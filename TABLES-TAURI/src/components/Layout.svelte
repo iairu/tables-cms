@@ -4,28 +4,28 @@
   import SideMenu from './SideMenu.svelte';
   import LoadingBar from './LoadingBar.svelte';
   import LoadingSkeleton from './LoadingSkeleton.svelte';
+  import BreathingLoader from './BreathingLoader.svelte';
   import NotesSidebar from './NotesSidebar.svelte';
   import ProjectMenu from './ProjectMenu.svelte';
-  import BuildConsole from './BuildConsole.svelte';
   import { cmsData } from '../stores/cmsData.js';
-  import { isLoading, showLoading, hideLoading } from '../stores/loading.js';
-  
+  import { isLoading } from '../stores/loading.js';
+
   export let currentSection = 'settings';
   export let currentRoute = '/cms/settings';
   export let onNavigate = () => {};
+  export let onBuildLocally = () => {};
+  export let onBuildAndDeploy = () => {};
+  export let isBuilding = false;
+  export let canBuild = false;
+  export let buildCooldownSeconds = 0;
+  export let domain = '';
+  export let vercelApiKey = '';
   export let extensions = {};
 
   let cmsDataValue;
   let isLoadingValue;
   let isNotesSidebarOpen = true;  // Always open by default when enabled
   let localExtensions = {};
-  
-  // Build console state
-  let showBuildConsole = false;
-  let buildProgress = 0;
-  let buildLogs = [];
-  let buildStatus = 'idle';
-  let buildCancelled = false;
 
   const unsubscribeCms = cmsData.subscribe(value => cmsDataValue = value);
   const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
@@ -130,17 +130,9 @@
   function toggleNotesSidebar() {
     isNotesSidebarOpen = !isNotesSidebarOpen;
   }
-  
+
   onMount(() => {
-    const handleShowLoading = () => showLoading();
-    const handleHideLoading = () => hideLoading();
-    
-    window.addEventListener('show-loading', handleShowLoading);
-    window.addEventListener('hide-loading', handleHideLoading);
-    
     return () => {
-      window.removeEventListener('show-loading', handleShowLoading);
-      window.removeEventListener('hide-loading', handleHideLoading);
       unsubscribeCms();
       unsubscribeLoading();
     };
@@ -202,7 +194,10 @@
 
     <div class="content-area">
       {#if isLoadingValue}
-        <LoadingSkeleton />
+        <div class="loading-center">
+          <BreathingLoader size={64} />
+          <p class="loading-text">Loading...</p>
+        </div>
       {:else}
         <slot></slot>
       {/if}
@@ -212,16 +207,6 @@
   {#if notesEnabled}
     <NotesSidebar isOpen={isNotesSidebarOpen} />
   {/if}
-  
-  <BuildConsole
-    isOpen={showBuildConsole}
-    isBuilding={buildStatus === 'building'}
-    progress={buildProgress}
-    logs={buildLogs}
-    status={buildStatus}
-    onCancel={cancelBuild}
-    onClose={closeBuildConsole}
-  />
 </div>
 
 <style>
@@ -285,7 +270,7 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
   }
-  
+
   .btn-secondary {
     background: rgba(255,255,255,0.2);
     border: 1px solid rgba(255,255,255,0.4);
@@ -298,8 +283,33 @@
     white-space: nowrap;
     transition: background 0.2s;
   }
-  
+
   .btn-secondary:hover {
     background: rgba(255,255,255,0.35);
+  }
+
+  .loading-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 20px;
+  }
+
+  .loading-text {
+    color: var(--text-secondary, #64748b);
+    font-size: 14px;
+    font-weight: 500;
+    animation: loading-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes loading-pulse {
+    0%, 100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 </style>

@@ -1,11 +1,9 @@
 <script>
   import { onMount } from 'svelte';
   import { cmsData, saveSettings } from '../../../stores/cmsData.js';
-  import { isLoading, showLoading, hideLoading } from '../../../stores/loading.js';
 
   let cmsDataValue;
   let acl = {};
-  let isLoadingValue;
   let selectedRole = 'admin';
   let isEditing = false;
 
@@ -45,13 +43,10 @@
     acl = value.acl || {};
   });
 
-  const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
-
   onMount(() => {
-    showLoading();
-    setTimeout(() => {
-      hideLoading();
-    }, 500);
+    return () => {
+      unsubscribeCms();
+    };
   });
 
   function hasPermission(role, permissionId) {

@@ -2,13 +2,11 @@
   import { onMount } from 'svelte';
   import { cmsData } from '../../../stores/cmsData.js';
   import { saveBiometricRows } from '../../../stores/cmsData.js';
-  import { isLoading, showLoading, hideLoading } from '../../../stores/loading.js';
   import ConfirmModal from '../../ConfirmModal.svelte';
   import AssetManagerModal from '../AssetManagerModal.svelte';
 
   let cmsDataValue;
   let biometricRows = [];
-  let isLoadingValue;
   let searchQuery = '';
   let selectedRecord = null;
   let isEditing = false;
@@ -65,13 +63,10 @@
     biometricRows = value.biometricRows || [];
   });
 
-  const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
-
   onMount(() => {
-    showLoading();
-    setTimeout(() => {
-      hideLoading();
-    }, 500);
+    return () => {
+      unsubscribeCms();
+    };
   });
 
   function resetForm() {

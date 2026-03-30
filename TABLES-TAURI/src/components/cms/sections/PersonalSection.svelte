@@ -2,13 +2,11 @@
   import { onMount } from 'svelte';
   import { cmsData } from '../../../stores/cmsData.js';
   import { saveUserRows } from '../../../stores/cmsData.js';
-  import { isLoading, showLoading, hideLoading } from '../../../stores/loading.js';
   import ConfirmModal from '../../ConfirmModal.svelte';
   import AssetManagerModal from '../AssetManagerModal.svelte';
 
   let cmsDataValue;
   let userRows = [];
-  let isLoadingValue;
   let searchQuery = '';
   let selectedUser = null;
   let isEditing = false;
@@ -50,13 +48,10 @@
     userRows = value.userRows || [];
   });
 
-  const unsubscribeLoading = isLoading.subscribe(value => isLoadingValue = value);
-
   onMount(() => {
-    showLoading();
-    setTimeout(() => {
-      hideLoading();
-    }, 500);
+    return () => {
+      unsubscribeCms();
+    };
   });
 
   function resetForm() {
