@@ -284,7 +284,7 @@ export function saveBlogArticleWithHistory(article, action = 'update', label = '
     );
   }
   
-  saveBlogArticles(updatedArticles, skipBroadcast);
+  saveBlogArticles(updatedArticles, false);
   return updatedArticles;
 }
 

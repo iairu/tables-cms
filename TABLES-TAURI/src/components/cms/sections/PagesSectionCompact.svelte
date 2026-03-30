@@ -24,6 +24,7 @@
   let selectedPageForHistory = null;
   let activeField = null;
   let pageAutoSaved = false;   // shows the ✓ auto-saved tick
+  let lastAutoSavedString = ''; // Phase 9: change detection
   
   // Bulk operations state
   let selectedPages = [];
@@ -73,18 +74,33 @@
 
   $: currentLangContent = editingPage ? getLocalizedContent(editingPage, currentLanguage) : null;
 
-  // PHASE 5: Immediately auto-save edits to localStorage to ensure no data is dropped on reload
+  // PHASE 5 & 9: Immediately auto-save edits and only show tick on actual changes
   let _autoSaveTimer;
   $: if (isEditingPage && editingPage && typeof window !== 'undefined') {
-    const activePages = cmsDataValue?.pages || [];
-    const mergedPages = activePages.map(p => p.id === editingPage.id ? editingPage : p);
-    // Include newly created pages before they're appended structurally if needed, but normally they are already in the array
-    if (!activePages.find(p => p.id === editingPage.id)) mergedPages.push(editingPage);
-    localStorage.setItem('pages', JSON.stringify(mergedPages));
-    // Briefly show the auto-saved tick
-    pageAutoSaved = true;
-    clearTimeout(_autoSaveTimer);
-    _autoSaveTimer = setTimeout(() => { pageAutoSaved = false; }, 1500);
+    const currentString = JSON.stringify(editingPage);
+    
+    if (currentString !== lastAutoSavedString) {
+      const activePages = cmsDataValue?.pages || [];
+      const mergedPages = activePages.map(p => p.id === editingPage.id ? editingPage : p);
+      if (!activePages.find(p => p.id === editingPage.id)) mergedPages.push(editingPage);
+      
+      // Sync store and localStorage
+      savePages(mergedPages, true);
+      
+      // ONLY SHOW TICK IF IT WAS ALREADY INITIALIZED (not the first render of the editor for this page)
+      if (lastAutoSavedString !== '') {
+        pageAutoSaved = true;
+        clearTimeout(_autoSaveTimer);
+        _autoSaveTimer = setTimeout(() => { pageAutoSaved = false; }, 1500);
+      }
+      
+      lastAutoSavedString = currentString;
+    }
+  }
+
+  // Reset tracking when closing editor or switching pages
+  $: if (!isEditingPage) {
+    lastAutoSavedString = '';
   }
 
   const componentTypes = [

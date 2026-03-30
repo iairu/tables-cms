@@ -188,3 +188,8 @@ also make sure page autosaves (show autosaved tick next to save button)
 ---
 
 when going back from edit page to page list, the page list is not updated, fix it
+
+also bring the autosave feature to edit article in blogsection
+
+autosave is being spammed in edit page and in edit article, make sure it only shows if user edited at least one field
+

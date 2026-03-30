@@ -18,6 +18,8 @@
   let isSaving = false;
   let lastSaved = null;
   let saveError = null;
+  let blogAutoSaved = false; // Phase 8: Auto-save indicator
+  let lastAutoSavedString = ''; // Phase 9: Change detection
   
   // Supported languages
   const languages = [
@@ -146,6 +148,36 @@
   function handleCancelEdit() {
     isEditingArticle = false;
     editingArticle = null;
+  }
+
+  // PHASE 8 & 9: Immediately auto-save blog edits and only show tick on actual changes
+  let _autoSaveTimer;
+  $: if (isEditingArticle && editingArticle && typeof window !== 'undefined') {
+    const currentString = JSON.stringify(editingArticle);
+    
+    if (currentString !== lastAutoSavedString) {
+      const activeArticles = cmsDataValue?.blogArticles || [];
+      const mergedArticles = activeArticles.map(a => a.id === editingArticle.id ? editingArticle : a);
+      if (!activeArticles.find(a => a.id === editingArticle.id)) mergedArticles.push(editingArticle);
+      
+      // Sync store and localStorage
+      saveBlogArticles(mergedArticles, true);
+      localStorage.setItem('blogArticles', JSON.stringify(mergedArticles));
+
+      // ONLY SHOW TICK IF IT WAS ALREADY INITIALIZED (not the first render of the editor for this article)
+      if (lastAutoSavedString !== '') {
+        blogAutoSaved = true;
+        clearTimeout(_autoSaveTimer);
+        _autoSaveTimer = setTimeout(() => { blogAutoSaved = false; }, 1500);
+      }
+      
+      lastAutoSavedString = currentString;
+    }
+  }
+
+  // Reset tracking when closing editor or switching articles
+  $: if (!isEditingArticle) {
+    lastAutoSavedString = '';
   }
   
   function handlePublishArticle() {
@@ -376,6 +408,12 @@
             <button class="btn-primary" on:click={handleSaveArticle}>
               <i class="fas fa-save"></i> Save
             </button>
+            
+            {#if blogAutoSaved}
+              <span class="autosaved-tick" title="Draft auto-saved">
+                <i class="fas fa-check-circle"></i> Auto-saved
+              </span>
+            {/if}
             
             {#if editingArticle.status === 'published'}
               <button class="btn-secondary" on:click={handleUnpublishArticle}>
@@ -798,6 +836,28 @@
     align-items: center;
     gap: 8px;
     font-weight: 600;
+  }
+
+  /* Phase 8: Auto-save Tick Styles */
+  .autosaved-tick {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #16a34a;
+    background: rgba(22, 163, 74, 0.1);
+    border: 1px solid rgba(22, 163, 74, 0.3);
+    padding: 4px 10px;
+    border-radius: 20px;
+    animation: autosave-fade 1.5s ease-in-out;
+  }
+
+  @keyframes autosave-fade {
+    0%   { opacity: 0; transform: translateY(4px); }
+    20%  { opacity: 1; transform: translateY(0); }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
   }
 
   .item-name i {
