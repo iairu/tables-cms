@@ -47,9 +47,9 @@
     aclExtensions: true
   };
 
-  // Initialize local settings from CMS data (only once on first load)
+  // Initialize local settings from CMS data — only once, only after data is fully loaded from localStorage
   let initialized = false;
-  $: if (cmsDataValue?.settings && !initialized) {
+  $: if (cmsDataValue?.isDataLoaded && cmsDataValue?.settings && !initialized) {
     localSettings = {
       ...localSettings,
       ...cmsDataValue.settings

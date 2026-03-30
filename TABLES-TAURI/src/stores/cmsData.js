@@ -60,8 +60,8 @@ async function loadJSON(path, defaultValue = null) {
     const response = await fetch(path);
     if (!response.ok) return defaultValue;
     const text = await response.text();
-    // Handle empty or invalid JSON
-    if (!text.trim()) return defaultValue;
+    // Handle empty or invalid JSON, intercepting Vite's index.html fallbacks
+    if (!text.trim() || text.trim().startsWith('<')) return defaultValue;
     return JSON.parse(text);
   } catch (e) {
     console.warn('Failed to load JSON:', path, e);

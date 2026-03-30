@@ -167,3 +167,5 @@ save page does not properly save components, back button in edit page is unstyli
 immediately save all edited fields to localstorage, same for settings, new page button does not do anything, remember details like note extension collapsed but active, etc.
 
 force reload of frontend still shows that settings fields like site name and site description (likely all other fields as well) are not being properly saved to and loaded from localStorage automatically without the need to click save settings, remove the save settings button and have all fields be automatically stored
+
+force reload of frontend still shows that settings fields like site name and site description (likely all other fields as well) are not being properly saved to and loaded from localStorage automatically without the need to click save settings
