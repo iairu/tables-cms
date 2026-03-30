@@ -23,6 +23,7 @@
   let showHistory = false;
   let selectedPageForHistory = null;
   let activeField = null;
+  let pageAutoSaved = false;   // shows the ✓ auto-saved tick
   
   // Bulk operations state
   let selectedPages = [];
@@ -73,12 +74,17 @@
   $: currentLangContent = editingPage ? getLocalizedContent(editingPage, currentLanguage) : null;
 
   // PHASE 5: Immediately auto-save edits to localStorage to ensure no data is dropped on reload
+  let _autoSaveTimer;
   $: if (isEditingPage && editingPage && typeof window !== 'undefined') {
     const activePages = cmsDataValue?.pages || [];
     const mergedPages = activePages.map(p => p.id === editingPage.id ? editingPage : p);
     // Include newly created pages before they're appended structurally if needed, but normally they are already in the array
     if (!activePages.find(p => p.id === editingPage.id)) mergedPages.push(editingPage);
     localStorage.setItem('pages', JSON.stringify(mergedPages));
+    // Briefly show the auto-saved tick
+    pageAutoSaved = true;
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = setTimeout(() => { pageAutoSaved = false; }, 1500);
   }
 
   const componentTypes = [
@@ -470,6 +476,11 @@
           <button class="btn btn-primary" on:click={savePage}>
             <i class="fas fa-save"></i> Save Page
           </button>
+          {#if pageAutoSaved}
+            <span class="autosaved-tick" title="Draft auto-saved">
+              <i class="fas fa-check-circle"></i> Auto-saved
+            </span>
+          {/if}
         </div>
       </div>
       <div class="editor-fields">
@@ -933,5 +944,26 @@
     cursor: pointer;
     font-weight: 600;
     color: var(--text-primary);
+  }
+
+  .autosaved-tick {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #16a34a;
+    background: rgba(22, 163, 74, 0.1);
+    border: 1px solid rgba(22, 163, 74, 0.3);
+    padding: 4px 10px;
+    border-radius: 20px;
+    animation: autosave-fade 1.5s ease-in-out;
+  }
+
+  @keyframes autosave-fade {
+    0%   { opacity: 0; transform: translateY(4px); }
+    20%  { opacity: 1; transform: translateY(0); }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
   }
 </style>

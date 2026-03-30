@@ -169,3 +169,22 @@ immediately save all edited fields to localstorage, same for settings, new page 
 force reload of frontend still shows that settings fields like site name and site description (likely all other fields as well) are not being properly saved to and loaded from localStorage automatically without the need to click save settings, remove the save settings button and have all fields be automatically stored
 
 force reload of frontend still shows that settings fields like site name and site description (likely all other fields as well) are not being properly saved to and loaded from localStorage automatically without the need to click save settings
+
+new page button does nothing but console error: [Error] ReferenceError: Can't find variable: cmsDataValue
+	savePageWithHistory (cmsData.js:216)
+	handleNewPage (PagesSectionCompact.svelte:1896)
+
+---
+
+save page issue:
+
+[Error] ReferenceError: Can't find variable: data
+	savePages (cmsData.js:212)
+	savePageWithHistory (cmsData.js:240)
+	handleNewPage (PagesSectionCompact.svelte:1896)
+
+also make sure page autosaves (show autosaved tick next to save button)
+
+---
+
+when going back from edit page to page list, the page list is not updated, fix it

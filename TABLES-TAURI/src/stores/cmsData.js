@@ -53,6 +53,10 @@ export const cmsData = writable({
   }
 });
 
+// Module-level snapshot of the store value for use in non-reactive functions
+let cmsDataValue = null;
+cmsData.subscribe(v => { cmsDataValue = v; });
+
 // Helper to load JSON from static files
 async function loadJSON(path, defaultValue = null) {
   if (!isBrowser) return defaultValue;
@@ -205,7 +209,7 @@ export async function loadCMSData() {
 export function savePages(pages, skipBroadcast = false) {
   cmsData.update(data => ({ ...data, pages }));
   saveToStorage('pages', pages);
-  if (!skipBroadcast && data.collabState.isConnected) {
+  if (!skipBroadcast && cmsDataValue?.collabState?.isConnected) {
     broadcastDataUpdate('pages', pages);
   }
   scheduleBuild();
