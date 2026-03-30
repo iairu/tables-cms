@@ -24,7 +24,7 @@
 
   let cmsDataValue;
   let isLoadingValue;
-  let isNotesSidebarOpen = true;  // Always open by default when enabled
+  let isNotesSidebarOpen = typeof window !== 'undefined' ? localStorage.getItem('notes-sidebar-open') !== 'false' : true;
   let localExtensions = {};
 
   const unsubscribeCms = cmsData.subscribe(value => cmsDataValue = value);
@@ -129,6 +129,7 @@
   
   function toggleNotesSidebar() {
     isNotesSidebarOpen = !isNotesSidebarOpen;
+    if (typeof window !== 'undefined') localStorage.setItem('notes-sidebar-open', isNotesSidebarOpen);
   }
 
   onMount(() => {

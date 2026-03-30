@@ -151,3 +151,19 @@ access control page is stuck on loading skeleton with maximum call stack size ex
 PagesSection and ACLSection get stuck on loading, BlogSection works just fine
 
 aclsection works well, pagessection still gets stuck
+
+clicking on the edit button in PagesSectionCompact in TABLES-TAURI should open the page editor with component selection, translation, etc. just like in TABLES-OLD
+
+great, show the edit page as a separate view and integrate component background and text colors with all supported themes (both dark and light)
+
+pagessection now works perfectly, make the blogsection and pagegroupssection and all other relevant sections look like the pagessection table
+
+when showing edit page or edit blog or edit page group: make sure to show the sidebar and header alongside the .project-menu as well
+
+remember project state and all field changes in localStorage, so that they get restored upon reopening the app
+
+save page does not properly save components, back button in edit page is unstylized, hard reload shows that active extensions and page state are not being properly saved to localstorage, everything must be saved to localstorage and then that dumped on "save project" button, please fix
+
+immediately save all edited fields to localstorage, same for settings, new page button does not do anything, remember details like note extension collapsed but active, etc.
+
+force reload of frontend still shows that settings fields like site name and site description (likely all other fields as well) are not being properly saved to and loaded from localStorage automatically without the need to click save settings, remove the save settings button and have all fields be automatically stored

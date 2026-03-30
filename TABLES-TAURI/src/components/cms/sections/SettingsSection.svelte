@@ -88,6 +88,11 @@
     saveSettings(localSettings);
   }
 
+  // Auto-Save all Settings mutations
+  $: if (initialized && localSettings) {
+    handleSaveSettings();
+  }
+
   function handleThemeSelect(themeId) {
     localSettings = { ...localSettings, theme: themeId };
 
@@ -219,10 +224,6 @@
               </select>
             </div>
           </div>
-          
-          <button class="btn-primary" on:click={handleSaveSettings}>
-            <i class="fas fa-save"></i> Save Settings
-          </button>
         </div>
       {:else if activeTab === 'theme'}
         <div class="tab-content">
@@ -344,10 +345,6 @@
               <i class="fas fa-rocket"></i> Build & Deploy to Vercel
             </button>
           </div>
-          
-          <button class="btn-primary" on:click={handleSaveSettings}>
-            <i class="fas fa-save"></i> Save Settings
-          </button>
         </div>
       {:else if activeTab === 'collaboration'}
         <div class="tab-content">
@@ -407,10 +404,6 @@
               </label>
             </div>
           </div>
-          
-          <button class="btn-primary" on:click={handleSaveSettings}>
-            <i class="fas fa-save"></i> Save Settings
-          </button>
         </div>
       {:else if activeTab === 'languages'}
         <div class="tab-content">
@@ -508,10 +501,6 @@
               <p class="help-text">Use machine translation to suggest translations for content</p>
             </div>
           </div>
-
-          <button class="btn-primary" on:click={handleSaveSettings}>
-            <i class="fas fa-save"></i> Save Settings
-          </button>
         </div>
       {:else if activeTab === 'social'}
         <div class="tab-content">
@@ -611,10 +600,6 @@
               <p class="help-text">Generate Twitter Card meta tags</p>
             </div>
           </div>
-
-          <button class="btn-primary" on:click={handleSaveSettings}>
-            <i class="fas fa-save"></i> Save Settings
-          </button>
         </div>
       {:else if activeTab === 'acl'}
         <div class="tab-content">
@@ -767,10 +752,6 @@
               </div>
             </div>
           </div>
-
-          <button class="btn-primary" on:click={handleSaveSettings}>
-            <i class="fas fa-save"></i> Save ACL Settings
-          </button>
         </div>
       {:else if activeTab === 'advanced'}
         <div class="tab-content">
@@ -846,10 +827,6 @@
               <p class="help-text">Clear all cached data from browser storage</p>
             </div>
           </div>
-          
-          <button class="btn-primary" on:click={handleSaveSettings}>
-            <i class="fas fa-save"></i> Save Settings
-          </button>
         </div>
       {/if}
     </div>

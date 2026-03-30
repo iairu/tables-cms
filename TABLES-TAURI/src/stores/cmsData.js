@@ -134,6 +134,7 @@ export async function loadCMSData() {
 
     // Transform pages from old format (title, rows) to new format (name, components)
     const transformedPages = (pages || []).map(page => ({
+      ...page, // Preserve original fields like translations
       id: page.id || Date.now().toString(),
       name: page.title || page.name || 'Untitled',
       slug: page.slug || 'untitled',
@@ -143,29 +144,52 @@ export async function loadCMSData() {
     }));
 
     // Fallback extensions from localStorage
-    const extData = extensions || loadFromStorage('extensions', {});
+    // extensions now prioritized in the core update object
     
+    // Try loading from localStorage first to preserve unsaved state across reloads
+    const localPages = loadFromStorage('pages');
+    const localPageGroups = loadFromStorage('pageGroups');
+    const localBlogArticles = loadFromStorage('blogArticles');
+    const localCatRows = loadFromStorage('catRows');
+    const localUserRows = loadFromStorage('userRows');
+    const localBiometricRows = loadFromStorage('biometricRows');
+    const localMedicalRows = loadFromStorage('medicalRows');
+    const localFinancialRows = loadFromStorage('financialRows');
+    const localLegalRows = loadFromStorage('legalRows');
+    const localInventoryRows = loadFromStorage('inventoryRows');
+    const localCustomerRows = loadFromStorage('customerRows');
+    const localEmployeeRows = loadFromStorage('employeeRows');
+    const localAttendanceRows = loadFromStorage('attendanceRows');
+    const localReservationRows = loadFromStorage('reservationRows');
+    const localComponentRows = loadFromStorage('componentRows');
+    const localMovieList = loadFromStorage('movieList');
+    const localSettings = loadFromStorage('settings');
+    const localAcl = loadFromStorage('acl');
+
+    const extData = loadFromStorage('extensions');
+
+    // Use local storage values if populated, otherwise use network JSONs (handles empty arrays/objects natively via truthy evaluation)
     cmsData.update(data => ({
       ...data,
-      pages: transformedPages || [],
-      pageGroups: pageGroups || [],
-      blogArticles: blogArticles || [],
-      catRows: catRows || [],
-      userRows: userRows || [],
-      biometricRows: biometricRows || [],
-      medicalRows: medicalRows || [],
-      financialRows: financialRows || [],
-      legalRows: legalRows || [],
-      inventoryRows: inventoryRows || [],
-      customerRows: customerRows || [],
-      employeeRows: employeeRows || [],
-      attendanceRows: attendanceRows || [],
-      reservationRows: reservationRows || [],
-      componentRows: componentRows || [],
-      movieList: movieList || [],
-      settings: settings || {},
-      acl: acl || {},
-      extensions: extData || {},
+      pages: localPages || transformedPages || [],
+      pageGroups: localPageGroups || pageGroups || [],
+      blogArticles: localBlogArticles || blogArticles || [],
+      catRows: localCatRows || catRows || [],
+      userRows: localUserRows || userRows || [],
+      biometricRows: localBiometricRows || biometricRows || [],
+      medicalRows: localMedicalRows || medicalRows || [],
+      financialRows: localFinancialRows || financialRows || [],
+      legalRows: localLegalRows || legalRows || [],
+      inventoryRows: localInventoryRows || inventoryRows || [],
+      customerRows: localCustomerRows || customerRows || [],
+      employeeRows: localEmployeeRows || employeeRows || [],
+      attendanceRows: localAttendanceRows || attendanceRows || [],
+      reservationRows: localReservationRows || reservationRows || [],
+      componentRows: localComponentRows || componentRows || [],
+      movieList: localMovieList || movieList || [],
+      settings: localSettings || settings || {},
+      acl: localAcl || acl || {},
+      extensions: extData || extensions || {},
       isDataLoaded: true
     }));
     
@@ -209,7 +233,7 @@ export function savePageWithHistory(page, action = 'update', label = '') {
     );
   }
   
-  savePages(updatedPages, skipBroadcast);
+  savePages(updatedPages);
   return updatedPages;
 }
 
@@ -956,3 +980,6 @@ if (isBrowser) {
     }
   }));
 }
+
+export function requestLock(fieldId) {}
+export function releaseLock(fieldId) {}

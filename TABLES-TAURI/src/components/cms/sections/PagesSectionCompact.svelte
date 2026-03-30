@@ -3,6 +3,7 @@
   import AssetManagerModal from '../AssetManagerModal.svelte';
   import ConfirmModal from '../../ConfirmModal.svelte';
   import HistoryPanel from '../HistoryPanel.svelte';
+  import ComponentEditor from './components/ComponentEditor.svelte';
 
   let cmsDataValue;
   const unsubscribe = cmsData.subscribe(value => cmsDataValue = value);
@@ -27,6 +28,58 @@
   let selectedPages = [];
   let showBulkDeleteConfirm = false;
   let selectAll = false;
+
+  let currentLanguage = 'en';
+  $: availableLanguages = cmsDataValue?.settings?.languages || [{ code: 'en', name: 'English' }];
+
+  function getLocalizedContent(page, lang) {
+    if (!page.translations || !page.translations[lang]) {
+      return {
+        name: page.name || '',
+        slug: page.slug || '',
+        components: page.components || []
+      };
+    }
+    return {
+      name: page.translations[lang].name || page.translations[lang].title || page.name || '',
+      components: page.translations[lang].components || page.translations[lang].rows || page.components || [],
+      slug: page.slug || ''
+    };
+  }
+
+  function saveLocalizedContent(lang, updates) {
+    if (!editingPage) return;
+    const translations = editingPage.translations || {};
+    const currentLangData = translations[lang] || {
+      name: editingPage.name || '',
+      slug: editingPage.slug || '',
+      components: editingPage.components || []
+    };
+    
+    translations[lang] = { ...currentLangData, ...updates };
+    
+    if (updates.slug !== undefined) {
+      editingPage.slug = updates.slug;
+      delete translations[lang].slug;
+    }
+    
+    if (lang === (cmsDataValue?.settings?.defaultLang || 'en')) {
+      editingPage = { ...editingPage, ...updates, translations };
+    } else {
+      editingPage = { ...editingPage, translations };
+    }
+  }
+
+  $: currentLangContent = editingPage ? getLocalizedContent(editingPage, currentLanguage) : null;
+
+  // PHASE 5: Immediately auto-save edits to localStorage to ensure no data is dropped on reload
+  $: if (isEditingPage && editingPage && typeof window !== 'undefined') {
+    const activePages = cmsDataValue?.pages || [];
+    const mergedPages = activePages.map(p => p.id === editingPage.id ? editingPage : p);
+    // Include newly created pages before they're appended structurally if needed, but normally they are already in the array
+    if (!activePages.find(p => p.id === editingPage.id)) mergedPages.push(editingPage);
+    localStorage.setItem('pages', JSON.stringify(mergedPages));
+  }
 
   const componentTypes = [
     { id: 'hero', name: 'Hero Section', icon: 'fa-image' },
@@ -80,9 +133,11 @@
       components: [],
       groups: [],
       createdAt: Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      translations: {}
     };
     savePageWithHistory(newPage, 'create', 'Created new page');
+    currentLanguage = cmsDataValue?.settings?.defaultLang || 'en';
     editingPage = { ...newPage };
     isEditingPage = true;
   }
@@ -107,6 +162,7 @@
   }
 
   function editPage(page) {
+    currentLanguage = cmsDataValue?.settings?.defaultLang || 'en';
     editingPage = { ...page, groups: [...(page.groups || [])] };
     isEditingPage = true;
   }
@@ -399,25 +455,31 @@
   </div>
 
   {#if isEditingPage && editingPage}
-    <div class="editor-panel">
+    <div class="editor-fullscreen">
       <div class="editor-header">
-        <h3>{cmsDataValue.pages.find(p => p.id === editingPage.id) ? 'Edit' : 'New'} Page</h3>
-        <div class="editor-actions">
-          <button class="btn btn-secondary btn-sm" on:click={cancelEdit}>
-            <i class="fas fa-times"></i> Cancel
-          </button>
-          <button class="btn btn-primary btn-sm" on:click={savePage}>
-            <i class="fas fa-save"></i> Save
+        <button class="btn-back" on:click={cancelEdit}>
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
+        <h2 style="flex: 1; margin: 0; font-size: 24px;">{cmsDataValue.pages.find(p => p.id === editingPage.id) ? 'Edit' : 'New'} Page</h2>
+        <div class="editor-actions" style="display: flex; gap: 10px; align-items: center;">
+          <select bind:value={currentLanguage} class="field-input" style="width: auto; padding: 6px 12px; height: 100%;">
+            {#each availableLanguages as lang}
+              <option value={lang.code}>{lang.name}</option>
+            {/each}
+          </select>
+          <button class="btn btn-primary" on:click={savePage}>
+            <i class="fas fa-save"></i> Save Page
           </button>
         </div>
       </div>
       <div class="editor-fields">
         <div class="field-row">
-          <label class="field-label">Page Name *</label>
+          <label class="field-label">Page Name ({currentLanguage}) *</label>
           <input
             type="text"
             class="field-input"
-            bind:value={editingPage.name}
+            value={currentLangContent?.name || ''}
+            on:input={(e) => saveLocalizedContent(currentLanguage, { name: e.target.value })}
             placeholder="Enter page name"
           />
         </div>
@@ -426,8 +488,10 @@
           <input
             type="text"
             class="field-input"
-            bind:value={editingPage.slug}
+            value={editingPage.slug || ''}
+            on:input={(e) => saveLocalizedContent(currentLanguage, { slug: e.target.value })}
             placeholder="page-slug"
+            disabled={editingPage.slug === 'home'}
           />
         </div>
         <div class="field-row">
@@ -445,6 +509,13 @@
           </div>
         </div>
       </div>
+
+      <ComponentEditor
+        rows={currentLangContent?.components || []}
+        {currentLanguage}
+        {cmsDataValue}
+        on:update={(e) => saveLocalizedContent(currentLanguage, { components: e.detail })}
+      />
     </div>
   {/if}
 
@@ -491,6 +562,8 @@
 
 <style>
   .pages-section-compact {
+    position: relative;
+    height: 100%;
     padding: 16px;
   }
 
@@ -737,12 +810,13 @@
     margin-bottom: 12px;
   }
 
-  .editor-panel {
-    margin-top: 16px;
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    box-shadow: var(--shadow-md);
+  .editor-fullscreen {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-primary);
+    z-index: 1000;
+    padding: 30px;
+    overflow-y: auto;
   }
 
   .editor-header {
@@ -784,6 +858,8 @@
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     font-size: var(--text-sm);
+    background: var(--bg-primary);
+    color: var(--text-primary);
   }
 
   .group-tags {
@@ -847,5 +923,15 @@
 
   .table-row.selected:hover {
     background: rgba(37, 99, 235, 0.1);
+  }
+
+  .btn-back {
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-primary);
   }
 </style>

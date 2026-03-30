@@ -60,7 +60,7 @@
   
   {#if multiline}
     <textarea
-      {value: localValue}
+      value={localValue}
       {placeholder}
       {disabled}
       {rows}
@@ -73,7 +73,7 @@
   {:else}
     <input
       {type}
-      {value: localValue}
+      value={localValue}
       {placeholder}
       {disabled}
       on:focus={handleFocus}

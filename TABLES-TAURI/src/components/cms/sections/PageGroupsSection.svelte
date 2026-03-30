@@ -200,253 +200,223 @@
     dragIndex = null;
   }
 </script>
-
-<div class="page-groups-section">
-  <div class="groups-layout">
-    <!-- Groups List -->
-    <div class="groups-list-panel {selectedGroup || isEditingGroup ? 'collapsed' : ''}">
-      <div class="panel-header">
-        <h2><i class="fas fa-layer-group"></i> Page Groups</h2>
-        <button class="btn-primary btn-sm" on:click={handleNewGroup}>
-          <i class="fas fa-plus"></i> New
-        </button>
-      </div>
-      
-      <div class="search-box">
-        <i class="fas fa-search"></i>
+<div class="page-groups-section-compact">
+  <div class="section-toolbar">
+    <div class="toolbar-left">
+      <h2 class="section-title">
+        <i class="fas fa-layer-group"></i>
+        Page Groups
+        <span class="badge">{filteredGroups.length}</span>
+      </h2>
+    </div>
+    <div class="toolbar-right">
+      <div class="filters">
         <input
           type="text"
+          class="search-input"
           placeholder="Search groups..."
           bind:value={searchQuery}
         />
       </div>
-      
-      <div class="groups-list">
-        {#each filteredGroups as group}
-          <div
-            class="group-item {selectedGroup?.id === group.id && !isEditingGroup ? 'active' : ''}"
-            on:click={() => handleSelectGroup(group)}
-          >
-            <div class="group-item-content">
-              <h3>{group.name || 'Untitled'}</h3>
-              <div class="group-meta">
-                <span class="pages-count">
-                  <i class="fas fa-file"></i> {group.pages?.length || 0} pages
-                </span>
-                {#if group.showInDropdown}
-                  <span class="dropdown-badge">
-                    <i class="fas fa-chevron-down"></i> Dropdown
-                  </span>
-                {/if}
-              </div>
-            </div>
-            <button
-              class="btn-icon btn-danger btn-xs"
-              on:click={(e) => { e.stopPropagation(); requestDeleteGroup(group.id); }}
-            >
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        {:else}
-          <div class="empty-state">
-            <i class="fas fa-layer-group"></i>
-            <p>No groups found</p>
-          </div>
-        {/each}
-      </div>
-    </div>
-    
-    <!-- Group Editor -->
-    <div class="group-editor-panel">
-      {#if !selectedGroup && !isEditingGroup}
-        <div class="no-selection">
-          <i class="fas fa-layer-group"></i>
-          <h3>Select a Group</h3>
-          <p>Choose a group from the list or create a new one</p>
-          <button class="btn-primary" on:click={handleNewGroup}>
-            <i class="fas fa-plus"></i> Create Group
-          </button>
-        </div>
-      {:else if isEditingGroup && editingGroup}
-        <div class="editor-container">
-          <div class="editor-header">
-            <button class="btn-back" on:click={handleCancelEdit}>
-              <i class="fas fa-arrow-left"></i> Back
-            </button>
-            <div class="editor-title">
-              <input
-                type="text"
-                class="group-name-input"
-                bind:value={editingGroup.name}
-                placeholder="Group Name"
-              />
-              <input
-                type="text"
-                class="group-slug-input"
-                bind:value={editingGroup.slug}
-                placeholder="group-slug"
-              />
-            </div>
-            <button class="btn-success" on:click={handleSaveGroup}>
-              <i class="fas fa-save"></i> Save
-            </button>
-          </div>
-          
-          <div class="editor-content">
-            <div class="settings-section">
-              <h3><i class="fas fa-cog"></i> Display Settings</h3>
-              
-              <div class="setting-row">
-                <label class="checkbox-label">
-                  <input type="checkbox" bind:checked={editingGroup.showInMenu} />
-                  <span>Show in Main Menu</span>
-                </label>
-                <p class="help-text">Display this group in the main navigation</p>
-              </div>
-              
-              <div class="setting-row">
-                <label class="checkbox-label">
-                  <input type="checkbox" bind:checked={editingGroup.showInDropdown} />
-                  <span>Show Dropdown Menu</span>
-                </label>
-                <p class="help-text">Show pages in this group as a dropdown menu</p>
-              </div>
-              
-              <div class="setting-row">
-                <label class="checkbox-label">
-                  <input type="checkbox" bind:checked={editingGroup.showSitemap} />
-                  <span>Show in Sitemap</span>
-                </label>
-                <p class="help-text">Include this group's pages in the sitemap</p>
-              </div>
-            </div>
-            
-            <div class="pages-section">
-              <div class="section-header">
-                <h3><i class="fas fa-files"></i> Group Pages</h3>
-                <button class="btn-primary btn-sm" on:click={handleAddPage}>
-                  <i class="fas fa-plus"></i> Add Page
-                </button>
-              </div>
-              
-              {#if pagesInEditingGroup && pagesInEditingGroup.length > 0}
-                <div class="pages-list">
-                  {#each pagesInEditingGroup as page, index}
-                    <div
-                      class="page-row"
-                      draggable="true"
-                      on:dragstart={() => handleDragStart(index)}
-                      on:dragover={(e) => handleDragOver(e, index)}
-                      on:drop={() => handleDrop(index)}
-                    >
-                      <div class="drag-handle">
-                        <i class="fas fa-grip-vertical"></i>
-                      </div>
-                      <div class="page-info">
-                        <span class="page-name">{page.name || 'Untitled'}</span>
-                        <span class="page-slug">/{page.slug || 'no-slug'}</span>
-                      </div>
-                      <div class="page-actions">
-                        <button class="btn-icon btn-xs" on:click={() => handleMovePage(index, 'up')} disabled={index === 0}>
-                          <i class="fas fa-chevron-up"></i>
-                        </button>
-                        <button class="btn-icon btn-xs" on:click={() => handleMovePage(index, 'down')} disabled={index === pagesInEditingGroup.length - 1}>
-                          <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <button class="btn-icon btn-danger btn-xs" on:click={() => handleRemovePage(index)}>
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </div>
-                  {/each}
-                </div>
-                
-                <div class="dropdown-preview">
-                  <h4><i class="fas fa-eye"></i> Dropdown Preview</h4>
-                  <div class="dropdown-menu-preview">
-                    <div class="dropdown-trigger">
-                      {editingGroup.name} <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="dropdown-items">
-                      {#each editingGroup.pages as pageId}
-                        <a href="#" class="dropdown-item-preview">
-                          {getPageName(pageId)}
-                        </a>
-                      {/each}
-                    </div>
-                  </div>
-                </div>
-              {:else}
-                <div class="empty-pages">
-                  <i class="fas fa-files"></i>
-                  <p>No pages in this group</p>
-                  <button class="btn-primary btn-sm" on:click={handleAddPage}>
-                    <i class="fas fa-plus"></i> Add First Page
-                  </button>
-                </div>
-              {/if}
-            </div>
-          </div>
-        </div>
-      {:else if selectedGroup}
-        <div class="group-preview">
-          <div class="preview-header">
-            <div>
-              <h2>{selectedGroup.name || 'Untitled'}</h2>
-              <p class="preview-slug">/{selectedGroup.slug || 'no-slug'}</p>
-            </div>
-            <div class="preview-actions">
-              <button class="btn-secondary" on:click={handleSelectGroup}>
-                <i class="fas fa-eye"></i> View
-              </button>
-              <button class="btn-primary" on:click={handleEditGroup}>
-                <i class="fas fa-edit"></i> Edit Group
-              </button>
-            </div>
-          </div>
-          
-          <div class="preview-content">
-            <div class="preview-settings">
-              <h3>Display Settings</h3>
-              <div class="settings-grid">
-                <div class="setting-item {selectedGroup.showInMenu ? 'enabled' : 'disabled'}">
-                  <i class="fas {selectedGroup.showInMenu ? 'fa-check-circle' : 'fa-times-circle'}"></i>
-                  <span>Show in Main Menu</span>
-                </div>
-                <div class="setting-item {selectedGroup.showInDropdown ? 'enabled' : 'disabled'}">
-                  <i class="fas {selectedGroup.showInDropdown ? 'fa-check-circle' : 'fa-times-circle'}"></i>
-                  <span>Show Dropdown Menu</span>
-                </div>
-                <div class="setting-item {selectedGroup.showSitemap ? 'enabled' : 'disabled'}">
-                  <i class="fas {selectedGroup.showSitemap ? 'fa-check-circle' : 'fa-times-circle'}"></i>
-                  <span>Show in Sitemap</span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="preview-pages">
-              <h3>Group Pages ({selectedGroup.pages?.length || 0})</h3>
-              {#if selectedGroup.pages && selectedGroup.pages.length > 0}
-                <div class="pages-list-preview">
-                  {#each selectedGroup.pages as pageId, index}
-                    <div class="page-item-preview">
-                      <span class="order">{index + 1}</span>
-                      <div class="page-details">
-                        <span class="name">{getPageName(pageId)}</span>
-                        <span class="slug">/{getPageSlug(pageId)}</span>
-                      </div>
-                    </div>
-                  {/each}
-                </div>
-              {:else}
-                <p class="empty-message">No pages in this group</p>
-              {/if}
-            </div>
-          </div>
-        </div>
-      {/if}
+      <button class="btn btn-primary btn-sm" on:click={handleNewGroup}>
+        <i class="fas fa-plus"></i>
+        New Group
+      </button>
     </div>
   </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Group Name</th>
+          <th>Slug</th>
+          <th class="text-center">Pages</th>
+          <th class="text-center">Display Settings</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#if filteredGroups.length === 0}
+          <tr>
+            <td colspan="5" class="empty-state">
+              <i class="fas fa-layer-group"></i>
+              <p>No groups found</p>
+            </td>
+          </tr>
+        {:else}
+          {#each filteredGroups as group (group.id)}
+            <tr class="table-row">
+              <td>
+                <div class="item-name" style="cursor: pointer;" on:click={() => handleSelectGroup(group) || handleEditGroup()}>
+                  <i class="fas fa-layer-group"></i>
+                  <span>{group.name || 'Untitled'}</span>
+                </div>
+              </td>
+              <td>
+                <code class="slug-text">/{group.slug}</code>
+              </td>
+              <td class="text-center">
+                <span class="badge">
+                  <i class="fas fa-file"></i> {group.pages?.length || 0}
+                </span>
+              </td>
+              <td class="text-center">
+                <div style="display: flex; gap: 4px; justify-content: center;">
+                  {#if group.showInMenu}<span class="badge-setting" title="In Menu"><i class="fas fa-bars"></i></span>{/if}
+                  {#if group.showInDropdown}<span class="badge-setting" title="Dropdown"><i class="fas fa-chevron-down"></i></span>{/if}
+                  {#if group.showSitemap}<span class="badge-setting" title="Sitemap"><i class="fas fa-sitemap"></i></span>{/if}
+                </div>
+              </td>
+              <td class="text-center">
+                <div class="action-buttons">
+                  <button
+                    class="btn-icon btn-xs"
+                    title="Edit"
+                    on:click|stopPropagation={() => handleSelectGroup(group) || handleEditGroup()}
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    class="btn-icon btn-xs btn-danger"
+                    title="Delete"
+                    on:click|stopPropagation={() => requestDeleteGroup(group.id)}
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          {/each}
+        {/if}
+      </tbody>
+    </table>
+  </div>
+
+  {#if isEditingGroup && editingGroup}
+    <div class="editor-fullscreen">
+      <div class="editor-container">
+        <div class="editor-header">
+          <button class="btn-back" on:click={handleCancelEdit}>
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <div class="editor-title">
+            <input
+              type="text"
+              class="group-name-input field-input"
+              bind:value={editingGroup.name}
+              placeholder="Group Name"
+            />
+            <input
+              type="text"
+              class="group-slug-input field-input"
+              bind:value={editingGroup.slug}
+              placeholder="group-slug"
+            />
+          </div>
+          <button class="btn-primary" on:click={handleSaveGroup}>
+            <i class="fas fa-save"></i> Save Group
+          </button>
+        </div>
+        
+        <div class="editor-content">
+          <div class="settings-section">
+            <h3><i class="fas fa-cog"></i> Display Settings</h3>
+            
+            <div class="setting-row">
+              <label class="checkbox-label">
+                <input type="checkbox" bind:checked={editingGroup.showInMenu} />
+                <span>Show in Main Menu</span>
+              </label>
+              <p class="help-text">Display this group in the main navigation</p>
+            </div>
+            
+            <div class="setting-row">
+              <label class="checkbox-label">
+                <input type="checkbox" bind:checked={editingGroup.showInDropdown} />
+                <span>Show Dropdown Menu</span>
+              </label>
+              <p class="help-text">Show pages in this group as a dropdown menu</p>
+            </div>
+            
+            <div class="setting-row">
+              <label class="checkbox-label">
+                <input type="checkbox" bind:checked={editingGroup.showSitemap} />
+                <span>Show in Sitemap</span>
+              </label>
+              <p class="help-text">Include this group's pages in the sitemap</p>
+            </div>
+          </div>
+          
+          <div class="pages-section">
+            <div class="section-header">
+              <h3><i class="fas fa-files"></i> Group Pages</h3>
+              <button class="btn-primary btn-sm" on:click={handleAddPage}>
+                <i class="fas fa-plus"></i> Add Page
+              </button>
+            </div>
+            
+            {#if pagesInEditingGroup && pagesInEditingGroup.length > 0}
+              <div class="pages-list">
+                {#each pagesInEditingGroup as page, index}
+                  <div
+                    class="page-row"
+                    draggable="true"
+                    on:dragstart={() => handleDragStart(index)}
+                    on:dragover={(e) => handleDragOver(e, index)}
+                    on:drop={() => handleDrop(index)}
+                  >
+                    <div class="drag-handle">
+                      <i class="fas fa-grip-vertical"></i>
+                    </div>
+                    <div class="page-info">
+                      <span class="page-name-t">{page.name || 'Untitled'}</span>
+                      <span class="page-slug-t">/{page.slug || 'no-slug'}</span>
+                    </div>
+                    <div class="page-actions">
+                      <button class="btn-icon btn-xs" on:click={() => handleMovePage(index, 'up')} disabled={index === 0}>
+                        <i class="fas fa-chevron-up"></i>
+                      </button>
+                      <button class="btn-icon btn-xs" on:click={() => handleMovePage(index, 'down')} disabled={index === pagesInEditingGroup.length - 1}>
+                        <i class="fas fa-chevron-down"></i>
+                      </button>
+                      <button class="btn-icon btn-danger btn-xs" on:click={() => handleRemovePage(index)}>
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                {/each}
+              </div>
+              
+              <div class="dropdown-preview">
+                <h4><i class="fas fa-eye"></i> Dropdown Preview</h4>
+                <div class="dropdown-menu-preview">
+                  <div class="dropdown-trigger">
+                    {editingGroup.name} <i class="fas fa-chevron-down"></i>
+                  </div>
+                  <div class="dropdown-items">
+                    {#each editingGroup.pages as pageId}
+                      <div class="dropdown-item-preview">
+                        {getPageName(pageId)}
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              </div>
+            {:else}
+              <div class="empty-pages">
+                <i class="fas fa-files"></i>
+                <p>No pages in this group</p>
+                <button class="btn-primary btn-sm" on:click={handleAddPage}>
+                  <i class="fas fa-plus"></i> Add First Page
+                </button>
+              </div>
+            {/if}
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
   
   <ConfirmModal
     isOpen={showDeleteConfirm}
@@ -461,181 +431,254 @@
 </div>
 
 <style>
-  .page-groups-section {
-    height: calc(100vh - 140px);
-    overflow: hidden;
-  }
-  
-  .groups-layout {
-    display: flex;
-    gap: 20px;
+  .page-groups-section-compact {
+    position: relative;
     height: 100%;
+    padding: 16px;
   }
-  
-  .groups-list-panel {
-    width: 320px;
-    background: var(--bg-card, white);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  .section-toolbar {
     display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition: width 0.3s;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
   }
-  
-  .groups-list-panel.collapsed {
-    width: 0;
-    padding: 0;
-    overflow: hidden;
-  }
-  
-  .panel-header {
-    padding: 20px;
-    border-bottom: 1px solid #e2e8f0;
+
+  .toolbar-left,
+  .toolbar-right {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
   }
-  
-  .panel-header h2 {
-    font-size: 18px;
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .search-box {
-    padding: 12px 20px;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .search-box i {
-    color: #94a3b8;
-  }
-  
-  .search-box input {
-    flex: 1;
-    border: none;
-    outline: none;
-    font-size: 14px;
-  }
-  
-  .groups-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-  }
-  
-  .group-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-bottom: 8px;
-  }
-  
-  .group-item:hover {
-    background: #f8fafc;
-  }
-  
-  .group-item.active {
-    background: #eff6ff;
-    border: 1px solid #2563eb;
-  }
-  
-  .group-item-content {
-    flex: 1;
-  }
-  
-  .group-item-content h3 {
-    font-size: 14px;
+    font-size: var(--text-lg);
     font-weight: 600;
-    margin: 0 0 6px;
-    color: #0f172a;
   }
-  
-  .group-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
+
+  .section-title i {
+    color: var(--color-primary);
   }
-  
-  .pages-count {
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  
-  .dropdown-badge {
-    background: #dbeafe;
-    color: #1e40af;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  
-  .group-editor-panel {
-    flex: 1;
-    background: var(--bg-card, white);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-  }
-  
-  .no-selection {
-    display: flex;
-    flex-direction: column;
+
+  .badge {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    padding: 40px;
-    text-align: center;
+    padding: 2px 8px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
   }
   
-  .no-selection i {
-    font-size: 64px;
-    color: #cbd5e1;
-    margin-bottom: 20px;
+  .badge-setting {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    color: var(--color-primary);
+    font-size: 12px;
   }
-  
-  .no-selection h3 {
-    font-size: 20px;
-    color: #0f172a;
-    margin-bottom: 8px;
-  }
-  
-  .no-selection p {
-    color: #64748b;
-    margin-bottom: 24px;
-  }
-  
-  .editor-container {
-    height: 100%;
+
+  .filters {
     display: flex;
-    flex-direction: column;
+    gap: 8px;
   }
-  
-  .editor-header {
-    padding: 20px;
-    border-bottom: 1px solid #e2e8f0;
+
+  .search-input {
+    padding: 6px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    width: 250px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .btn-sm {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+
+  .btn-primary {
+    background: var(--color-primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--color-primary-dark);
+  }
+
+  .table-container {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--bg-tertiary);
+    border-bottom: 2px solid var(--border-light);
+  }
+
+  .data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    font-size: var(--text-sm);
+  }
+
+  .data-table tbody tr {
+    transition: background var(--transition-fast);
+  }
+
+  .data-table tbody tr:hover {
+    background: var(--bg-secondary);
+  }
+
+  .item-name {
     display: flex;
     align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+
+  .item-name i {
+    color: var(--color-primary);
+  }
+
+  .slug-text {
+    padding: 2px 6px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--color-primary);
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .btn-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--text-secondary);
+  }
+
+  .btn-icon:hover {
+    background: var(--border-medium);
+    color: var(--text-primary);
+  }
+
+  .btn-icon.btn-danger:hover {
+    background: #ef4444;
+    color: white;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-tertiary);
+  }
+
+  .empty-state i {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  .editor-fullscreen {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-primary);
+    z-index: 1000;
+    padding: 30px;
+    overflow-y: auto;
+  }
+
+  .editor-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 60px);
+  }
+
+  .editor-header {
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 16px;
   }
-  
+
+  .btn-back {
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
   .editor-title {
     flex: 1;
     display: flex;
@@ -646,8 +689,6 @@
   .group-name-input {
     flex: 2;
     padding: 8px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
     font-size: 16px;
     font-weight: 600;
   }
@@ -655,31 +696,32 @@
   .group-slug-input {
     flex: 1;
     padding: 8px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
     font-size: 14px;
     font-family: monospace;
   }
-  
+
   .editor-content {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
   }
-  
+
   .settings-section,
   .pages-section {
-    background: #f8fafc;
+    background: var(--bg-secondary);
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 20px;
+    border: 1px solid var(--border-light);
   }
-  
+
   .settings-section h3,
   .pages-section h3 {
     font-size: 16px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-primary);
     margin: 0 0 16px;
     display: flex;
     align-items: center;
@@ -688,7 +730,7 @@
   
   .settings-section h3 i,
   .pages-section h3 i {
-    color: #2563eb;
+    color: var(--color-primary);
   }
   
   .setting-row {
@@ -705,7 +747,7 @@
     gap: 10px;
     font-size: 14px;
     font-weight: 500;
-    color: #475569;
+    color: var(--text-primary);
     cursor: pointer;
   }
   
@@ -717,7 +759,7 @@
   
   .help-text {
     font-size: 12px;
-    color: #64748b;
+    color: var(--text-secondary);
     margin-top: 6px;
     margin-left: 28px;
   }
@@ -743,8 +785,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: var(--bg-card, white);
-    border: 1px solid #e2e8f0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
     border-radius: 6px;
     padding: 12px;
     cursor: grab;
@@ -755,7 +797,7 @@
   }
   
   .drag-handle {
-    color: #94a3b8;
+    color: var(--text-tertiary);
     cursor: grab;
   }
   
@@ -763,15 +805,15 @@
     flex: 1;
   }
   
-  .page-name {
+  .page-name-t {
     display: block;
     font-weight: 500;
-    color: #0f172a;
+    color: var(--text-primary);
   }
   
-  .page-slug {
+  .page-slug-t {
     font-size: 12px;
-    color: #64748b;
+    color: var(--text-secondary);
     font-family: monospace;
   }
   
@@ -783,289 +825,64 @@
   .empty-pages {
     text-align: center;
     padding: 40px 20px;
-    color: #64748b;
+    color: var(--text-tertiary);
   }
   
   .empty-pages i {
     font-size: 48px;
-    color: #cbd5e1;
+    color: var(--border-medium);
     margin-bottom: 16px;
   }
   
   .dropdown-preview {
     margin-top: 20px;
-    background: var(--bg-card, white);
+    background: var(--bg-card);
     border-radius: 8px;
     padding: 16px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-light);
   }
-  
   .dropdown-preview h4 {
+    margin-top: 0;
     font-size: 14px;
-    font-weight: 600;
-    color: #475569;
-    margin: 0 0 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    color: var(--text-secondary);
   }
   
   .dropdown-menu-preview {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-light);
     border-radius: 6px;
-    overflow: hidden;
+    display: inline-block;
+    min-width: 200px;
+    background: var(--bg-primary);
   }
   
   .dropdown-trigger {
-    background: #2563eb;
-    color: white;
-    padding: 12px 16px;
-    font-weight: 600;
+    padding: 10px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
+    font-weight: 500;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-  }
-  
-  .dropdown-items {
-    background: var(--bg-card, white);
+    align-items: center;
+    color: var(--text-primary);
   }
   
   .dropdown-item-preview {
-    display: block;
     padding: 10px 16px;
-    color: #475569;
-    text-decoration: none;
-    border-top: 1px solid #f1f5f9;
-    transition: background 0.2s;
-  }
-  
-  .dropdown-item-preview:hover {
-    background: #f8fafc;
-  }
-  
-  .preview-header {
-    padding: 20px;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  
-  .preview-header h2 {
-    font-size: 20px;
-    margin: 0 0 4px;
-  }
-  
-  .preview-slug {
-    color: #64748b;
-    font-family: monospace;
-    margin: 0;
-  }
-  
-  .preview-actions {
-    display: flex;
-    gap: 8px;
-  }
-  
-  .preview-content {
-    padding: 20px;
-  }
-  
-  .preview-settings h3,
-  .preview-pages h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #0f172a;
-    margin-bottom: 16px;
-  }
-  
-  .settings-grid {
-    display: grid;
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  
-  .setting-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: #f8fafc;
-    border-radius: 8px;
-    font-size: 14px;
-  }
-  
-  .setting-item i {
-    font-size: 20px;
-  }
-  
-  .setting-item.enabled {
-    background: #d1fae5;
-    color: #065f46;
-  }
-  
-  .setting-item.enabled i {
-    color: #10b981;
-  }
-  
-  .setting-item.disabled {
-    background: #f1f5f9;
-    color: #64748b;
-  }
-  
-  .setting-item.disabled i {
-    color: #94a3b8;
-  }
-  
-  .pages-list-preview {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .page-item-preview {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: #f8fafc;
-    border-radius: 8px;
-  }
-  
-  .order {
-    width: 24px;
-    height: 24px;
-    background: #e2e8f0;
-    color: #64748b;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  
-  .page-details {
-    flex: 1;
-  }
-  
-  .name {
     display: block;
-    font-weight: 500;
-    color: #0f172a;
-  }
-  
-  .slug {
-    font-size: 12px;
-    color: #64748b;
-    font-family: monospace;
-  }
-  
-  .empty-message {
-    color: #64748b;
-    text-align: center;
-    padding: 20px;
-  }
-  
-  .btn-primary,
-  .btn-secondary,
-  .btn-success {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
+    color: var(--text-primary);
+    text-decoration: none;
     font-size: 14px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
+    border-bottom: 1px solid var(--border-light);
   }
   
-  .btn-primary {
-    background: #2563eb;
-    color: white;
+  .dropdown-item-preview:last-child {
+    border-bottom: none;
   }
   
-  .btn-primary:hover {
-    background: #1d4ed8;
-  }
-  
-  .btn-secondary {
-    background: var(--bg-card, white);
-    color: #475569;
-    border: 1px solid #e2e8f0;
-  }
-  
-  .btn-secondary:hover {
-    background: #f8fafc;
-  }
-  
-  .btn-success {
-    background: #10b981;
-    color: white;
-  }
-  
-  .btn-success:hover {
-    background: #059669;
-  }
-  
-  .btn-back {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: #64748b;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  
-  .btn-back:hover {
-    color: #0f172a;
-  }
-  
-  .btn-icon {
-    width: 28px;
-    height: 28px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
-  
-  .btn-icon.btn-xs {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .btn-icon.btn-danger {
-    background: #fee2e2;
-    color: #ef4444;
-  }
-  
-  .btn-icon.btn-danger:hover {
-    background: #ef4444;
-    color: white;
-  }
-  
-  .btn-sm {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-  
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: #64748b;
-  }
-  
-  .empty-state i {
-    font-size: 48px;
-    color: #cbd5e1;
-    margin-bottom: 16px;
+  .field-input {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
   }
 </style>
