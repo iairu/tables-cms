@@ -75,6 +75,36 @@
   $: currentLangContent = editingPage ? getLocalizedContent(editingPage, currentLanguage) : null;
 
   // PHASE 5 & 9: Immediately auto-save edits and only show tick on actual changes
+  // - Implemented state serialization checks (`JSON.stringify`) to suppress redundant background store updates if no data has changed.
+
+  // ## Phase 10: Extension UI and Settings Expansion
+
+  // ### Theme-Sensitive Extensions
+  // - Updated `ExtensionsSection.svelte` CSS to use variables like `var(--text-primary)` and `var(--color-primary)`.
+  // - Verified extension titles and descriptions adapt correctly to Light/Dark mode changes.
+
+  // ### Comprehensive World Language Support
+  // - Expanded the language settings to include ~50 world languages (European, Asian, African, and American).
+  // - Updated the "Site Default Language" dropdown and "Supported Languages" grid with flags and native names.
+
+  // ### Access Control (ACL) as an Extension
+  // - Integrated ACL into the extension system as `acl-extension-enabled`.
+  // - Tied the **Access Control** sidebar link and the **ACL** settings tab to this extension.
+  // - UI elements now reactively hide when the extension is disabled and reappear when enabled.
+
+  // ## Phase 11: Extension UI Theme Refinement
+
+  // ### Comprehensive Variable Mapping
+  // - Replaced all remaining hardcoded gray and background shades in `ExtensionsSection.svelte` with system variables (e.g., `var(--bg-secondary)`, `var(--text-tertiary)`, `var(--border-light)`).
+  // - **Coming Soon** cards now correctly adjust their background and opacity based on the active theme (Synthwave, Matrix, Ayu, etc.).
+  // - Categorical badges and counters now maintain high contrast in both light and dark modes.
+
+  // ## Verification
+  // - Verified real-time page list updates.
+  // - Confirmed auto-save tick behavior and change-detection filtering.
+  // - Validated ACL extension toggling across Sidebar and Settings.
+  // - Verified Extension card theme sensitivity across multiple themes.
+  // - Multi-platform build succeeded with `npm run build`.
   let _autoSaveTimer;
   $: if (isEditingPage && editingPage && typeof window !== 'undefined') {
     const currentString = JSON.stringify(editingPage);

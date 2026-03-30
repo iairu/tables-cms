@@ -19,7 +19,7 @@
     { id: 'blog', label: 'Blog', icon: 'fa-pen-fancy', extension: 'blog-extension-enabled' },
     { id: 'cats', label: 'Pedigree', icon: 'fa-paw', extension: 'pedigree-extension-enabled' },
     { id: 'personal', label: 'Personal', icon: 'fa-user', extension: 'personal-extension-enabled' },
-    { id: 'acl', label: 'Access Control', icon: 'fa-shield-alt', extension: null },
+    { id: 'acl', label: 'Access Control', icon: 'fa-shield-alt', extension: 'acl-extension-enabled' },
     { id: 'inventory', label: 'Inventory', icon: 'fa-boxes', extension: 'rental-extension-enabled', parent: 'rental' },
     { id: 'attendance', label: 'Attendance', icon: 'fa-clipboard-list', extension: 'rental-extension-enabled', parent: 'rental' },
     { id: 'customers', label: 'Customers', icon: 'fa-users', extension: 'rental-extension-enabled', parent: 'rental' },

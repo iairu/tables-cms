@@ -70,6 +70,66 @@
     { id: 'senior', name: 'Senior Citizen', description: 'High contrast accessibility', preview: '#0047ab' },
     { id: 'ayu', name: 'Ayu', description: 'Warm dark theme', preview: '#ffcc66' }
   ];
+
+  // Phase 10: Expanded world language support
+  const languages = [
+    // European
+    { code: 'en', name: 'English', flag: '🇺🇸', native: 'English' },
+    { code: 'es', name: 'Spanish', flag: '🇪🇸', native: 'Español' },
+    { code: 'fr', name: 'French', flag: '🇫🇷', native: 'Français' },
+    { code: 'de', name: 'German', flag: '🇩🇪', native: 'Deutsch' },
+    { code: 'it', name: 'Italian', flag: '🇮🇹', native: 'Italiano' },
+    { code: 'pt', name: 'Portuguese', flag: '🇵🇹', native: 'Português' },
+    { code: 'nl', name: 'Dutch', flag: '🇳🇱', native: 'Nederlands' },
+    { code: 'ru', name: 'Russian', flag: '🇷🇺', native: 'Русский' },
+    { code: 'pl', name: 'Polish', flag: '🇵🇱', native: 'Polski' },
+    { code: 'tr', name: 'Turkish', flag: '🇹🇷', native: 'Türkçe' },
+    { code: 'sv', name: 'Swedish', flag: '🇸🇪', native: 'Svenska' },
+    { code: 'no', name: 'Norwegian', flag: '🇳🇴', native: 'Norsk' },
+    { code: 'da', name: 'Danish', flag: '🇩🇰', native: 'Dansk' },
+    { code: 'fi', name: 'Finnish', flag: '🇫🇮', native: 'Suomi' },
+    { code: 'cs', name: 'Czech', flag: '🇨🇿', native: 'Čeština' },
+    { code: 'hu', name: 'Hungarian', flag: '🇭🇺', native: 'Magyar' },
+    { code: 'ro', name: 'Romanian', flag: '🇷🇴', native: 'Română' },
+    { code: 'uk', name: 'Ukrainian', flag: '🇺🇦', native: 'Українська' },
+    { code: 'el', name: 'Greek', flag: '🇬🇷', native: 'Ελληνικά' },
+    
+    // Asian
+    { code: 'zh', name: 'Chinese', flag: '🇨🇳', native: '中文' },
+    { code: 'ja', name: 'Japanese', flag: '🇯🇵', native: '日本語' },
+    { code: 'ko', name: 'Korean', flag: '🇰🇷', native: '한국어' },
+    { code: 'hi', name: 'Hindi', flag: '🇮🇳', native: 'हिन्दी' },
+    { code: 'bn', name: 'Bengali', flag: '🇧🇩', native: 'বাংলা' },
+    { code: 'pa', name: 'Punjabi', flag: '🇮🇳', native: 'ਪੰਜਾਬੀ' },
+    { code: 'te', name: 'Telugu', flag: '🇮🇳', native: 'తెలుగు' },
+    { code: 'mr', name: 'Marathi', flag: '🇮🇳', native: 'မරාઠી' },
+    { code: 'ta', name: 'Tamil', flag: '🇮🇳', native: 'தமிழ்' },
+    { code: 'ur', name: 'Urdu', flag: '🇵🇰', native: 'اردو' },
+    { code: 'vi', name: 'Vietnamese', flag: '🇻🇳', native: 'Tiếng Việt' },
+    { code: 'th', name: 'Thai', flag: '🇹🇭', native: 'ไทย' },
+    { code: 'id', name: 'Indonesian', flag: '🇮🇩', native: 'Bahasa Indonesia' },
+    { code: 'ms', name: 'Malay', flag: '🇲🇾', native: 'Bahasa Melayu' },
+    { code: 'fa', name: 'Persian', flag: '🇮🇷', native: 'فارسی' },
+    { code: 'he', name: 'Hebrew', flag: '🇮🇱', native: 'עברית' },
+    { code: 'ar', name: 'Arabic', flag: '🇸🇦', native: 'العربية' },
+
+    // African
+    { code: 'sw', name: 'Swahili', flag: '🇰🇪', native: 'Kiswahili' },
+    { code: 'am', name: 'Amharic', flag: '🇪🇹', native: 'አማርኛ' },
+    { code: 'yo', name: 'Yoruba', flag: '🇳🇬', native: 'Yorùbá' },
+    { code: 'ig', name: 'Igbo', flag: '🇳🇬', native: 'Asụsụ Igbo' },
+    { code: 'ha', name: 'Hausa', flag: '🇳🇬', native: 'Harshen Hausa' },
+    { code: 'zu', name: 'Zulu', flag: '🇿🇦', native: 'isiZulu' },
+    { code: 'xh', name: 'Xhosa', flag: '🇿🇦', native: 'isiXhosa' },
+    { code: 'af', name: 'Afrikaans', flag: '🇿🇦', native: 'Afrikaans' },
+
+    // American
+    { code: 'en-US', name: 'English (US)', flag: '🇺🇸', native: 'English (US)' },
+    { code: 'pt-BR', name: 'Portuguese (Brazil)', flag: '🇧🇷', native: 'Português (Brasil)' },
+    { code: 'es-MX', name: 'Spanish (Mexico)', flag: '🇲🇽', native: 'Español (México)' },
+    { code: 'qu', name: 'Quechua', flag: '🇵🇪', native: 'Runa Simi' },
+    { code: 'gn', name: 'Guarani', flag: '🇵🇾', native: "Avañe'ẽ" }
+  ];
   
   let activeTab = 'general';
 
@@ -83,6 +143,19 @@
     { id: 'acl', label: 'ACL', icon: 'fa-user-shield' },
     { id: 'advanced', label: 'Advanced', icon: 'fa-wrench' }
   ];
+
+  // Phase 10: Conditionally show ACL tab
+  $: visibleTabs = tabs.filter(tab => {
+    if (tab.id === 'acl') {
+      return cmsDataValue?.extensions?.['acl-extension-enabled'] === true;
+    }
+    return true;
+  });
+
+  // Switch tab if current one is hidden
+  $: if (activeTab === 'acl' && !cmsDataValue?.extensions?.['acl-extension-enabled']) {
+    activeTab = 'general';
+  }
   
   function handleSaveSettings() {
     saveSettings(localSettings);
@@ -128,7 +201,7 @@
   <div class="settings-layout">
     <!-- Settings Tabs -->
     <aside class="settings-tabs">
-      {#each tabs as tab}
+      {#each visibleTabs as tab}
         <button
           class="tab {activeTab === tab.id ? 'active' : ''}"
           on:click={() => activeTab = tab.id}
@@ -415,18 +488,9 @@
             <div class="form-group">
               <label for="defaultLanguage">Site Default Language</label>
               <select id="defaultLanguage" bind:value={localSettings.language}>
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-                <option value="de">Deutsch</option>
-                <option value="it">Italiano</option>
-                <option value="pt">Português</option>
-                <option value="nl">Nederlands</option>
-                <option value="ja">日本語</option>
-                <option value="zh">中文</option>
-                <option value="ko">한국어</option>
-                <option value="ru">Русский</option>
-                <option value="ar">العربية</option>
+                {#each languages as lang}
+                  <option value={lang.code}>{lang.flag} {lang.name} ({lang.native})</option>
+                {/each}
               </select>
               <p class="help-text">Default language for content and UI</p>
             </div>
@@ -438,56 +502,13 @@
               Select which languages your site should support. Content can be translated for each enabled language.
             </p>
             <div class="language-grid">
-              <label class="language-option">
-                <input type="checkbox" checked />
-                <span class="language-flag">🇺🇸</span>
-                <span class="language-name">English</span>
-              </label>
-              <label class="language-option">
-                <input type="checkbox" />
-                <span class="language-flag">🇪🇸</span>
-                <span class="language-name">Español</span>
-              </label>
-              <label class="language-option">
-                <input type="checkbox" />
-                <span class="language-flag">🇫🇷</span>
-                <span class="language-name">Français</span>
-              </label>
-              <label class="language-option">
-                <input type="checkbox" />
-                <span class="language-flag">🇩🇪</span>
-                <span class="language-name">Deutsch</span>
-              </label>
-              <label class="language-option">
-                <input type="checkbox" />
-                <span class="language-flag">🇮🇹</span>
-                <span class="language-name">Italiano</span>
-              </label>
-              <label class="language-option">
-                <input type="checkbox" />
-                <span class="language-flag">🇵🇹</span>
-                <span class="language-name">Português</span>
-              </label>
-              <label class="language-option">
-                <input type="checkbox" />
-                <span class="language-flag">🇳🇱</span>
-                <span class="language-name">Nederlands</span>
-              </label>
-              <label class="language-option">
-                <input type="checkbox" />
-                <span class="language-flag">🇯🇵</span>
-                <span class="language-name">日本語</span>
-              </label>
-              <label class="language-option">
-                <input type="checkbox" />
-                <span class="language-flag">🇨🇳</span>
-                <span class="language-name">中文</span>
-              </label>
-              <label class="language-option">
-                <input type="checkbox" />
-                <span class="language-flag">🇰🇷</span>
-                <span class="language-name">한국어</span>
-              </label>
+              {#each languages as lang}
+                <label class="language-option">
+                  <input type="checkbox" />
+                  <span class="language-flag">{lang.flag}</span>
+                  <span class="language-name">{lang.name}</span>
+                </label>
+              {/each}
             </div>
           </div>
 

@@ -193,3 +193,12 @@ also bring the autosave feature to edit article in blogsection
 
 autosave is being spammed in edit page and in edit article, make sure it only shows if user edited at least one field
 
+make .extension-title sensitive to dark/light theme change
+
+make supported languages in settings a complete list of all native european/asian/american/african languages
+
+make access control an extension (hide all acl from settings and from sidebar if not activei in extensions)
+
+make .extension-card.coming-soon sensitive to dark/light theme change
+
+same for .extension-card.sensitive and .danger-zone

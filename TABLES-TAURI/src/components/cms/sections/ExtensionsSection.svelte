@@ -147,6 +147,15 @@
       sensitive: false
     },
     {
+      id: 'acl-extension-enabled',
+      name: 'Access Control (ACL)',
+      description: 'Manage user permissions, roles, and access levels across the CMS.',
+      icon: 'fa-shield-alt',
+      category: 'Security',
+      comingSoon: false,
+      sensitive: false
+    },
+    {
       id: 'collaboration-enabled',
       name: 'Real-time Collaboration',
       description: 'WebSocket-based collaboration with "Currently edited by" notifications.',
@@ -182,6 +191,7 @@
       'Database': 'fa-database',
       'Business': 'fa-briefcase',
       'Personal': 'fa-user',
+      'Security': 'fa-shield-alt',
       'Sensitive': 'fa-exclamation-triangle'
     };
     return icons[category] || 'fa-puzzle-piece';
@@ -265,7 +275,7 @@
   
   .section-header h2 {
     font-size: 28px;
-    color: #0f172a;
+    color: var(--text-primary, #0f172a);
     margin-bottom: 8px;
     display: flex;
     align-items: center;
@@ -273,7 +283,7 @@
   }
   
   .section-header h2 i {
-    color: #2563eb;
+    color: var(--color-primary, #2563eb);
   }
   
   .section-description {
@@ -291,24 +301,24 @@
     gap: 12px;
     margin-bottom: 20px;
     padding-bottom: 12px;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--border-light, #e2e8f0);
   }
   
   .category-header i {
     font-size: 20px;
-    color: #2563eb;
+    color: var(--color-primary, #2563eb);
   }
   
   .category-header h3 {
     font-size: 18px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-primary, #0f172a);
     margin: 0;
   }
   
   .category-count {
-    background: #e2e8f0;
-    color: #64748b;
+    background: var(--bg-tertiary, #e2e8f0);
+    color: var(--text-tertiary, #64748b);
     font-size: 12px;
     padding: 2px 10px;
     border-radius: 12px;
@@ -340,12 +350,12 @@
   
   .extension-card.coming-soon {
     opacity: 0.7;
-    background: #f8fafc;
+    background: var(--bg-secondary, #f8fafc);
   }
   
   .extension-card.sensitive {
-    border-color: #fbbf24;
-    background: #fffbeb;
+    border-color: var(--color-accent, #fbbf24);
+    background: rgba(245, 158, 11, 0.05);
   }
   
   .extension-header {
@@ -356,7 +366,7 @@
   
   .extension-header i {
     font-size: 32px;
-    color: #2563eb;
+    color: var(--color-primary, #2563eb);
     flex-shrink: 0;
   }
   
@@ -367,7 +377,7 @@
   .extension-title h3 {
     font-size: 16px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-primary, #0f172a);
     margin: 0;
     display: flex;
     align-items: center;
@@ -377,7 +387,7 @@
   
   .extension-id {
     font-size: 11px;
-    color: #94a3b8;
+    color: var(--text-muted, #94a3b8);
     font-family: monospace;
   }
   
@@ -390,8 +400,8 @@
   }
   
   .badge-soon {
-    background: #e2e8f0;
-    color: #64748b;
+    background: var(--bg-tertiary, #e2e8f0);
+    color: var(--text-tertiary, #64748b);
   }
   
   .badge-warning {
@@ -400,19 +410,19 @@
   }
   
   .extension-description {
-    color: #64748b;
+    color: var(--text-tertiary, #64748b);
     font-size: 14px;
     line-height: 1.5;
     flex: 1;
   }
   
   .extension-warning {
-    background: #fef3c7;
-    border-left: 3px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    border-left: 3px solid var(--color-accent, #f59e0b);
     padding: 12px;
     border-radius: 6px;
     font-size: 12px;
-    color: #92400e;
+    color: var(--color-accent, #92400e);
     display: flex;
     gap: 8px;
     line-height: 1.4;
@@ -444,7 +454,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #cbd5e1;
+    background-color: var(--border-medium, #cbd5e1);
     transition: 0.3s;
     border-radius: 28px;
   }
@@ -475,7 +485,7 @@
   }
   
   .toggle.disabled .toggle-slider {
-    background-color: #e2e8f0;
+    background-color: var(--bg-tertiary, #e2e8f0);
   }
   
   .toggle.disabled input:checked + .toggle-slider {
