@@ -37,8 +37,8 @@
   function handleNewGroup() {
     const newGroup = {
       id: Date.now().toString(),
-      name: 'New Group',
-      slug: 'new-group',
+      name: 'Default Group',
+      slug: 'default-group',
       pages: [],
       showInMenu: true,
       showInDropdown: true,
@@ -625,17 +625,6 @@
   .btn-icon.btn-danger:hover {
     background: #ef4444;
     color: white;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-tertiary);
-  }
-
-  .empty-state i {
-    font-size: 48px;
-    margin-bottom: 12px;
   }
 
   .editor-fullscreen {

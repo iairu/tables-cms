@@ -911,17 +911,6 @@
     color: white;
   }
 
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-tertiary);
-  }
-
-  .empty-state i {
-    font-size: 48px;
-    margin-bottom: 12px;
-  }
-
   .editor-fullscreen {
     position: absolute;
     inset: 0;

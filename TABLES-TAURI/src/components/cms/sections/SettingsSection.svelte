@@ -93,6 +93,14 @@
     { code: 'ro', name: 'Romanian', flag: '🇷🇴', native: 'Română' },
     { code: 'uk', name: 'Ukrainian', flag: '🇺🇦', native: 'Українська' },
     { code: 'el', name: 'Greek', flag: '🇬🇷', native: 'Ελληνικά' },
+    { code: 'sk', name: 'Slovak', flag: '🇸🇰', native: 'Slovenčina' },
+    { code: 'sl', name: 'Slovene', flag: '🇸🇮', native: 'Slovenščina' },
+    { code: 'hr', name: 'Croatian', flag: '🇭🇷', native: 'Hrvatski' },
+    { code: 'sr', name: 'Serbian', flag: '🇷🇸', native: 'Српски' },
+    { code: 'bg', name: 'Bulgarian', flag: '🇧🇬', native: 'Български' },
+    { code: 'lt', name: 'Lithuanian', flag: '🇱🇹', native: 'Lietuvių' },
+    { code: 'lv', name: 'Latvian', flag: '🇱🇻', native: 'Latviešu' },
+    { code: 'et', name: 'Estonian', flag: '🇪🇪', native: 'Eesti' },
     
     // Asian
     { code: 'zh', name: 'Chinese', flag: '🇨🇳', native: '中文' },
@@ -131,6 +139,14 @@
     { code: 'gn', name: 'Guarani', flag: '🇵🇾', native: "Avañe'ẽ" }
   ];
   
+  // Phase 12: Searchable language filter
+  let languageSearch = '';
+  $: filteredLanguages = languages.filter(lang => 
+    lang.name.toLowerCase().includes(languageSearch.toLowerCase()) ||
+    lang.native.toLowerCase().includes(languageSearch.toLowerCase()) ||
+    lang.code.toLowerCase().includes(languageSearch.toLowerCase())
+  );
+
   let activeTab = 'general';
 
   const tabs = [
@@ -501,14 +517,42 @@
             <p class="help-text" style="margin-bottom: 16px;">
               Select which languages your site should support. Content can be translated for each enabled language.
             </p>
-            <div class="language-grid">
-              {#each languages as lang}
-                <label class="language-option">
-                  <input type="checkbox" />
-                  <span class="language-flag">{lang.flag}</span>
-                  <span class="language-name">{lang.name}</span>
-                </label>
-              {/each}
+            <div class="language-dropdown-container">
+              <div class="language-search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input 
+                  type="text" 
+                  class="language-search-input" 
+                  placeholder="Search languages..." 
+                  bind:value={languageSearch}
+                />
+              </div>
+              <div class="language-scroll-list">
+                {#each filteredLanguages as lang}
+                  <label class="language-checkbox-item">
+                    <input 
+                      type="checkbox" 
+                      checked={localSettings.supportedLanguages?.includes(lang.code)}
+                      on:change={(e) => {
+                        const supported = localSettings.supportedLanguages || [];
+                        if (e.target.checked) {
+                          localSettings.supportedLanguages = [...supported, lang.code];
+                        } else {
+                          localSettings.supportedLanguages = supported.filter(c => c !== lang.code);
+                        }
+                      }}
+                    />
+                    <span class="lang-flag">{lang.flag}</span>
+                    <span class="lang-info">
+                      <span class="lang-name">{lang.name}</span>
+                      <span class="lang-native">{lang.native}</span>
+                    </span>
+                  </label>
+                {/each}
+                {#if filteredLanguages.length === 0}
+                  <div class="no-languages">No languages found for "{languageSearch}"</div>
+                {/if}
+              </div>
             </div>
           </div>
 
@@ -1084,7 +1128,7 @@
   }
   
   .gdpr-notice {
-    background: #eff6ff;
+    background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.1);
     border-left: 4px solid var(--color-primary);
     padding: 16px;
     border-radius: 6px;
@@ -1101,14 +1145,14 @@
   
   .gdpr-notice p {
     font-size: 14px;
-    color: var(--text-secondary);
+    color: var(--text-primary, #0f172a);
     margin: 0;
     line-height: 1.5;
   }
   
   .danger-zone {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
     border-radius: 8px;
     padding: 20px;
   }
@@ -1238,6 +1282,94 @@
   .language-name {
     font-weight: 500;
     color: var(--text-primary);
+  }
+
+  /* Language Settings Styles Phase 12 */
+  .language-dropdown-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 400px;
+  }
+
+  .language-search-wrapper {
+    position: relative;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .language-search-wrapper .search-icon {
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+
+  .language-search-input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  .language-scroll-list {
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .language-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .language-checkbox-item:hover {
+    background: var(--bg-tertiary);
+  }
+
+  .language-checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+  }
+
+  .lang-flag {
+    font-size: 20px;
+  }
+
+  .lang-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lang-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .lang-native {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  .no-languages {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 13px;
   }
 
   /* Social Media Styles */

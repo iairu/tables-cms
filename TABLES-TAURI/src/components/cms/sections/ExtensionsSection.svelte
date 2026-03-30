@@ -225,9 +225,6 @@
                   {#if ext.comingSoon}
                     <span class="badge badge-soon">Soon</span>
                   {/if}
-                  {#if ext.sensitive}
-                    <span class="badge badge-warning"><i class="fas fa-exclamation-triangle"></i></span>
-                  {/if}
                 </h3>
                 <span class="extension-id">{ext.id}</span>
               </div>
@@ -404,9 +401,9 @@
     color: var(--text-tertiary, #64748b);
   }
   
-  .badge-warning {
-    background: #fbbf24;
-    color: #92400e;
+  .badge-soon {
+    background: var(--bg-tertiary, #e2e8f0);
+    color: var(--text-tertiary, #64748b);
   }
   
   .extension-description {

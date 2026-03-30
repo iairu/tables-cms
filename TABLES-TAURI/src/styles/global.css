@@ -410,7 +410,40 @@ a:hover {
 
 .btn-primary {
   background: var(--color-primary);
-  color: white;
+  color: var(--bg-primary, white);
+}
+
+/* Phase 12: Standardized Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--bg-card, white);
+  border-radius: var(--radius-lg);
+  color: var(--text-tertiary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.empty-state i {
+  font-size: 56px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.empty-state h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 14px;
 }
 
 .btn-primary:hover:not(:disabled) {

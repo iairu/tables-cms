@@ -202,3 +202,13 @@ make access control an extension (hide all acl from settings and from sidebar if
 make .extension-card.coming-soon sensitive to dark/light theme change
 
 same for .extension-card.sensitive and .danger-zone
+
+slovak language is missing from supported languages in settings and similar for other state level languages, add them, change the language list to a dropdown of checkboxes with a search filter inside the dropdown
+
+.empty-state is not properly supported by themes inside uploads view, remove .badge-warning from extensions view, make .btn-primary text dark when the button background is light
+
+.gdpr-notice is incorrectly themed (unreadable due to background color) on dark themes
+
+page groups contain an empty group by default, change its name to Default Group
+
+---

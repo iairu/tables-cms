@@ -609,6 +609,11 @@
     background: #e2e8f0;
   }
 
+  .btn-icon .badge-soon {
+    background: var(--bg-tertiary, #e2e8f0);
+    color: var(--text-tertiary, #64748b);
+  }
+
   .btn-icon.btn-danger {
     background: #fee2e2;
     color: #ef4444;
@@ -628,17 +633,17 @@
 
   .empty-state i {
     font-size: 48px;
-    color: #cbd5e1;
+    color: var(--text-muted, #cbd5e1);
     margin-bottom: 16px;
   }
 
   .empty-state h3 {
     margin: 8px 0;
-    color: #0f172a;
+    color: var(--text-primary, #0f172a);
   }
 
   .empty-state p {
-    color: #64748b;
+    color: var(--text-tertiary, #64748b);
   }
 
   /* Preview Modal */
