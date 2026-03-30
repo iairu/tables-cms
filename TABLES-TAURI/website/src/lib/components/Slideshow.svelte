@@ -20,6 +20,9 @@
   class="slideshow" 
   onmouseenter={() => isPaused = true}
   onmouseleave={() => isPaused = false}
+  role="region"
+  aria-roledescription="carousel"
+  aria-label="Image Slideshow"
   style="min-height: {minHeight}vh; max-height: {maxHeight}vh;"
 >
   {#if slides.length > 0}
@@ -39,7 +42,7 @@
   {#if slides.length > 1}
     <div class="nav-dots">
       {#each slides as _, i}
-        <button class="dot {i === currentSlide ? 'active' : ''}" onclick={() => currentSlide = i}></button>
+        <button class="dot {i === currentSlide ? 'active' : ''}" onclick={() => currentSlide = i} aria-label="Go to slide {i + 1}"></button>
       {/each}
     </div>
   {/if}

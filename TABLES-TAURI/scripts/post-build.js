@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
 async function postBuild() {
-  const websiteDist = path.join(rootDir, 'website', 'dist-website');
+  const websiteDist = path.join(rootDir, 'dist-website');
   const finalDist = path.join(rootDir, 'dist');
   const cmsDataSrc = path.join(rootDir, 'public', 'cms');
   const cmsDataDest = path.join(finalDist, 'cms');

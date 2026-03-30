@@ -5,6 +5,19 @@ import { scheduleAutoSave } from './projectManager.js';
 
 const isBrowser = typeof window !== 'undefined';
 
+function slugify(text) {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w-]+/g, '')  // Remove all non-word chars
+    .replace(/--+/g, '-')     // Replace multiple - with single -
+    .replace(/^-+/, '')       // Trim - from start
+    .replace(/-+$/, '');      // Trim - from end
+}
+
 // CMS Data Store
 export const cmsData = writable({
   pages: [],
@@ -686,6 +699,8 @@ export async function triggerBuild(localOnly = false) {
         const settings = cmsDataValue?.settings || {};
         const vercelApiKey = settings.vercelApiKey || '';
         const vercelProjectId = settings.vercelProjectId || '';
+        const vercelTeamId = settings.vercelTeamId || '';
+        const projectName = slugify(settings.siteName || 'tables-cms');
         
         if (!vercelApiKey) {
           throw new Error('Vercel API key not configured. Please add it in Settings → Deployment.');
@@ -694,6 +709,7 @@ export async function triggerBuild(localOnly = false) {
         await invoke('trigger_deploy', {
           vercelApiKey,
           vercelProjectId,
+          vercelTeamId,
           cmsData: exportData
         });
       }

@@ -29,6 +29,8 @@
   class="bubbles {isDark ? 'dark' : ''}"
   onmouseenter={() => isPaused = true}
   onmouseleave={() => isPaused = false}
+  aria-roledescription="carousel"
+  aria-label="Customer Reviews"
   style="background: {isDark ? 'black' : 'white'}; color: {isDark ? 'white' : 'black'};"
 >
   <div class="slides">

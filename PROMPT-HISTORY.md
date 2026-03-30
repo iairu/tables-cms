@@ -238,3 +238,124 @@ properly migrate the secondary website frontend (main-site) from TABLES-OLD to T
 
 its showing "build triggered (browser mode)" despite me being in tauri app not browser
 
+---
+
+fix deploy issue:
+
+
+✅ Post-build complete! Your site is ready in 'dist/'.
+🚀 Deploying to Vercel...
+❌ Deployment failed: Failed to spawn vercel: No such file or directory (os error 2)
+
+utilize npx for vercel cli
+
+---
+
+fix
+
+ERR: Error: Command `vercel deploy` requires confirmation. Use option "--yes" to confirm.
+❌ Deployment failed: Command exited with status: exit status: 1
+
+---
+
+vercel tries to deploy wrong folder:
+
+✅ Post-build complete! Your site is ready in 'dist/'.
+🚀 Deploying to Vercel...
+ERR: Loading scopes…
+ERR: Searching for existing projects…
+ERR: > No framework detected. Default Project Settings:
+ERR:
+ERR: - Build Command: `npm run vercel-build` or `npm run build`
+ERR: - Development Command: None
+ERR: - Install Command: `yarn install`, `pnpm install`, `npm install`, or `bun install`
+ERR: - Output Directory: `public` if it exists, or `.`
+ERR: Linked to ondrej-spaniks-projects/src-tauri (created .vercel and added it to .gitignore)
+ERR: Deploying ondrej-spaniks-projects/src-tauri
+
+make sure the dist folder gets deployed to vercel and not src-tauri
+
+---
+
+fix
+
+
+✅ Post-build complete! Your site is ready in 'dist/'.
+🚀 Deploying to Vercel...
+ERR: Loading scopes…
+ERR: Searching for existing projects…
+ERR: Local settings detected in vercel.json:
+ERR: - Build Command: npm run build:ssg
+ERR: - Framework: vite
+ERR: - Install Command: npm install
+ERR: - Output Directory: dist
+ERR: Merging default Project Settings for Vite. Previously listed overrides are prioritized.
+ERR: > Auto-detected Project Settings for Vite
+ERR:
+ERR: Error: Project names can be up to 100 characters long and must be lowercase. They can include letters, digits, and the following characters: '.', '_', '-'. However, they cannot contain the sequence '---'. (400)
+ERR: Learn More: https://vercel.com/docs/projects/overview#project-name
+❌ Deployment failed: Command exited with status: exit status: 1
+
+---
+
+deployment name is now correct, however the upload size is incorrect - looks like unnecessary folders like node_modules are included in the upload, also fix ERR showing on every line even thought there is no error:
+
+🚀 Deploying to Vercel...
+ERR: The "--name" option is deprecated (https://vercel.link/name-flag)
+ERR: Loading scopes…
+ERR: Searching for existing projects…
+ERR: Local settings detected in vercel.json:
+ERR: - Build Command: npm run build:ssg
+ERR: - Framework: vite
+ERR: - Install Command: npm install
+ERR: - Output Directory: dist
+ERR: Merging default Project Settings for Vite. Previously listed overrides are prioritized.
+ERR: > Auto-detected Project Settings for Vite
+ERR:
+ERR: Linked to ondrej-spaniks-projects/onetauridemo (created .vercel and added it to .gitignore)
+ERR: Deploying ondrej-spaniks-projects/onetauridemo
+ERR: Uploading [--------------------] (0.0B/4.9GB)
+
+---
+
+Building: ✓ 60 modules transformed.
+Building: x Build failed in 811ms
+Building: error during build:
+Building: src/main.js (1:9): "mount" is not exported by "../node_modules/svelte/src/runtime/index.js", imported by "src/main.js".
+Building: file: /vercel/path0/website/src/main.js:1:9
+Building: 1: import { mount } from 'svelte'
+Building: ^
+Building: 2: import './app.css'
+Building: 3: import App from './App.svelte'
+Building: at getRollupError (file:///vercel/path0/node_modules/rollup/dist/es/shared/parseAst.js:406:41)
+Building: at error (file:///vercel/path0/node_modules/rollup/dist/es/shared/parseAst.js:402:42)
+Building: at Module.error (file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:17065:16)
+Building: at Module.traceVariable (file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:17477:29)
+Building: at ModuleScope.findVariable (file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:15090:39)
+Building: at Identifier.bind (file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:5450:40)
+Building: at CallExpression.bind (file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:2832:23)
+Building: at CallExpression.bind (file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:12199:15)
+Building: at VariableDeclarator.bind (file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:2832:23)
+Building: at VariableDeclaration.bind (file:///vercel/path0/node_modules/rollup/dist/es/shared/node-entry.js:2828:28)
+Building: Error: Command "npm run build:ssg" exited with 1
+Error: Command "npm run build:ssg" exited with 1
+https://onetauridemo-l7c92any1-ondrej-spaniks-projects.vercel.app
+❌ Deployment failed: Command exited with status: exit status: 1
+
+---
+
+[Error] TypeError: undefined is not an object (evaluating 'first_child_getter.call')
+
+	in <unknown>
+
+	create_effect (runtime-Zb735PPz.js:4151)
+	block (runtime-Zb735PPz.js:4340)
+	wrapper (index-client-BBznkO0-.js:238)
+	Module Code (main.js:4)
+	evaluate
+	moduleEvaluation
+	(anonymous function)
+	promiseReactionJob
+
+---
+

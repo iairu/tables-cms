@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+website/node_modules/
+src-tauri/node_modules/
+
+# Build artifacts
+src-tauri/target/
+src-tauri/dist/
+dist-website/
+
+# Local files
+.DS_Store
+.git/
+.vscode/
+.idea/
+*.log
+
+# App data
+attachments/
+uploads/
+tmp/
+temp/

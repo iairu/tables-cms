@@ -407,7 +407,7 @@ fn trigger_build(app: tauri::AppHandle, cms_data: serde_json::Value) -> Result<S
 
     let app_handle = app.clone();
     std::thread::spawn(move || {
-        let project_dir = match std::env::current_dir() {
+        let mut project_dir = match std::env::current_dir() {
             Ok(dir) => dir,
             Err(e) => {
                 let err_msg = format!("❌ Error: Failed to get current directory: {}", e);
@@ -418,6 +418,13 @@ fn trigger_build(app: tauri::AppHandle, cms_data: serde_json::Value) -> Result<S
                 return;
             }
         };
+        
+        // Ensure we are in the project root (not src-tauri)
+        if project_dir.ends_with("src-tauri") {
+            if let Some(parent) = project_dir.parent() {
+                project_dir = parent.to_path_buf();
+            }
+        }
 
         // Save CMS data to files first
         if let Err(e) = save_cms_data(&project_dir, &cms_data) {
@@ -466,6 +473,7 @@ fn trigger_deploy(
     app: tauri::AppHandle, 
     vercel_api_key: String, 
     vercel_project_id: String,
+    vercel_team_id: String,
     cms_data: serde_json::Value
 ) -> Result<String, String> {
     let mut status = DEPLOYMENT_STATUS.lock().unwrap();
@@ -481,7 +489,7 @@ fn trigger_deploy(
 
     let app_handle = app.clone();
     std::thread::spawn(move || {
-        let project_dir = match std::env::current_dir() {
+        let mut project_dir = match std::env::current_dir() {
             Ok(dir) => dir,
             Err(e) => {
                 let err_msg = format!("❌ Error: Failed to get current directory: {}", e);
@@ -492,10 +500,17 @@ fn trigger_deploy(
                 return;
             }
         };
+        
+        // Ensure we are in the project root (not src-tauri)
+        if project_dir.ends_with("src-tauri") {
+            if let Some(parent) = project_dir.parent() {
+                project_dir = parent.to_path_buf();
+            }
+        }
 
         // Save CMS data to files first
         if let Err(e) = save_cms_data(&project_dir, &cms_data) {
-            let err_msg = format!("❌ Error: Failed to save CMS data: {}", e);
+            let err_msg = format!("❌ Error saving CMS data: {}", e);
             let mut status = DEPLOYMENT_STATUS.lock().unwrap();
             status.is_deploying = false;
             status.build_logs.push(err_msg.clone());
@@ -535,15 +550,17 @@ fn trigger_deploy(
         }
         let _ = app_handle.emit("build-log", deploy_msg);
 
-        let mut deploy_args = vec!["--prod", "--token", &vercel_api_key];
-        if !vercel_project_id.is_empty() {
+        let mut deploy_args = vec!["vercel", "--prod", "--yes", "--token", &vercel_api_key];
+        
+        // Correctly handle Team ID as scope
+        if !vercel_team_id.is_empty() {
             deploy_args.push("--scope");
-            deploy_args.push(&vercel_project_id);
+            deploy_args.push(&vercel_team_id);
         }
 
         let deploy_result = execute_command_with_logs(
             &app_handle,
-            "vercel",
+            "npx",
             &deploy_args,
             &project_dir
         );
@@ -696,8 +713,8 @@ fn execute_command_with_logs(
         let reader = BufReader::new(stderr);
         for line in reader.lines().flatten() {
             let mut status = DEPLOYMENT_STATUS.lock().unwrap();
-            status.build_logs.push(format!("ERR: {}", line));
-            let _ = app_clone2.emit("build-log", format!("ERR: {}", line));
+            status.build_logs.push(line.clone());
+            let _ = app_clone2.emit("build-log", line.clone());
         }
     });
 
